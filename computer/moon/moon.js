@@ -6,12 +6,13 @@ var latitude;
 var e1 = new THREE.Vector3(1,0,0),
     e2 = new THREE.Vector3(0,1,0),
     e3 = new THREE.Vector3(0,0,1),
-    zero = new THREE.Vector3(0,0,0);
-var sun_trajectory;
+    zero = new THREE.Vector3(0,0,0),
+    radius = 200;
+var celestial; // 天球
 
 function newSettings() {
   latitude = $('#latitude').val() / 180.0 * Math.PI;
-  sun_trajectory.quaternion.setFromAxisAngle(e2, Math.PI/2 - latitude);
+  celestial.quaternion.setFromAxisAngle(e2, Math.PI/2 - latitude);
 }
 
 function init() {
@@ -35,24 +36,44 @@ function init() {
 
   scene.add(new THREE.AmbientLight(0x404040));
 
-  var ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(600, 600),
-    new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
-  ground.material.side = THREE.DoubleSide;
-  ground.quaternion.setFromAxisAngle(e1, Math.PI);
-  scene.add(ground);
-
-  var dome = new THREE.Mesh(
-    new THREE.SphereGeometry(250,30,20, 0, Math.PI),
+  celestial = new THREE.Mesh(
+    new THREE.SphereGeometry(radius,30,20),
     new THREE.MeshLambertMaterial(
       { color: "blue", transparent: true, opacity: 0.1 }));
-  scene.add(dome);
+  scene.add(celestial);
 
-  sun_trajectory = new THREE.Mesh(
-    new THREE.TorusGeometry(250,1,3,50),
-    new THREE.MeshLambertMaterial());
-  scene.add(sun_trajectory);
+  var polaris = new THREE.Mesh(        // 天の北極
+    new THREE.SphereGeometry(5), 
+    new THREE.MeshLambertMaterial({ color: "black"}));
+  polaris.position.z = radius;
+  celestial.add(polaris);
+
+  var material = new THREE.MeshLambertMaterial();
+
+  var sun_trajectory = new THREE.Mesh( // 春分、秋分
+    new THREE.TorusGeometry(radius,1,3,50), 
+    material);
+  celestial.add(sun_trajectory);
+
+  sun_trajectory = new THREE.Mesh(     // 夏至
+    new THREE.TorusGeometry(radius * Math.cos(23.4/180*Math.PI),1,3,50),
+    material);
+  celestial.add(sun_trajectory);
+  sun_trajectory.position.z = radius * Math.sin(23.4/180*Math.PI)
+
+  sun_trajectory = new THREE.Mesh(     // 冬至
+    new THREE.TorusGeometry(radius * Math.cos(23.4/180*Math.PI),1,3,50),
+    material);
+  celestial.add(sun_trajectory);
+  sun_trajectory.position.z = -radius * Math.sin(23.4/180*Math.PI)
+
+  var ground = new THREE.Mesh(
+    new THREE.CubeGeometry(600, 600,radius * 1.1),
+    new THREE.MeshLambertMaterial(
+      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
+  ground.quaternion.setFromAxisAngle(e1, Math.PI);
+  scene.add(ground);
+  ground.position.z = -105;
 
   var light = new THREE.DirectionalLight(0xffffff);
   light.position.set(0,0,50);
