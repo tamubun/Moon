@@ -7,12 +7,26 @@ var e1 = new THREE.Vector3(1,0,0),
     e2 = new THREE.Vector3(0,1,0),
     e3 = new THREE.Vector3(0,0,1),
     zero = new THREE.Vector3(0,0,0),
+    earth_th = 23.4 / 180.0 * Math.PI,
+    earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th)),
+    sun_trajectory,
     radius = 200;
 var celestial; // 天球
+
+/* 赤道上で太陽が南中した時の天頂からの角度。南が正。
+   phase は、春分から数えた日を角度に換算したもの */
+function getAngle(phase) {
+  var pos = e1.clone().applyAxisAngle(earth_axis, phase);
+  return Math.asin(pos.z);
+}
 
 function newSettings() {
   latitude = $('#latitude').val() / 180.0 * Math.PI;
   celestial.quaternion.setFromAxisAngle(e1, latitude);
+  var angle = getAngle($('#date').val()/365.0*2*Math.PI);
+  sun_trajectory.scale.set(
+    radius * Math.cos(angle), 1, radius * Math.cos(angle));
+  sun_trajectory.position.y = -radius * Math.sin(angle);
 }
 
 function init() {
@@ -48,26 +62,38 @@ function init() {
   polaris.position.y = radius;
   celestial.add(polaris);
 
-  var material = new THREE.MeshLambertMaterial();
+  var material = new THREE.LineBasicMaterial({ color: 0x888888 }),
+      geo = new THREE.Geometry(),
+      trajectory, i, th;
 
-  var sun_trajectory = new THREE.Mesh( // 春分、秋分
-    new THREE.TorusGeometry(radius,1,3,50), 
-    material);
-  sun_trajectory.quaternion.setFromAxisAngle(e1, Math.PI/2);
-  celestial.add(sun_trajectory);
+  for ( i = 0; i < 41; ++i ) {
+    th = 2*Math.PI / 40 * i;
+    geo.vertices.push(new THREE.Vector3(Math.cos(th), 0, Math.sin(th)));
+  }
+  var circle = new THREE.Line(geo, material);
 
-  sun_trajectory = new THREE.Mesh(     // 夏至
-    new THREE.TorusGeometry(radius * Math.cos(23.4/180*Math.PI),1,3,50),
-    material);
-  sun_trajectory.quaternion.setFromAxisAngle(e1, Math.PI/2);
-  sun_trajectory.position.y = radius * Math.sin(23.4/180*Math.PI)
-  celestial.add(sun_trajectory);
+  // 春分、秋分
+  trajectory = circle.clone();
+  trajectory.scale.set(radius, 1, radius);
+  celestial.add(trajectory);
 
-  sun_trajectory = new THREE.Mesh(     // 冬至
-    new THREE.TorusGeometry(radius * Math.cos(23.4/180*Math.PI),1,3,50),
-    material);
-  sun_trajectory.quaternion.setFromAxisAngle(e1, Math.PI/2);
-  sun_trajectory.position.y = -radius * Math.sin(23.4/180*Math.PI)
+  // 夏至
+  trajectory = circle.clone();
+  trajectory.scale.set(
+    radius * Math.cos(earth_th), 1, radius * Math.cos(earth_th));
+  trajectory.position.y = radius * Math.sin(earth_th)
+  celestial.add(trajectory);
+
+  // 冬至
+  trajectory = circle.clone();
+  trajectory.scale.set(
+    radius * Math.cos(earth_th), 1, radius * Math.cos(earth_th));
+  trajectory.position.y = -radius * Math.sin(earth_th)
+  celestial.add(trajectory);
+
+  // 指定した日の太陽
+  sun_trajectory = new THREE.Line(
+    geo, new THREE.LineBasicMaterial({ color: 0xff7777, linewidth: 2}));
   celestial.add(sun_trajectory);
 
   var ground = new THREE.Mesh(
@@ -76,7 +102,7 @@ function init() {
       { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
   ground.quaternion.setFromAxisAngle(e1, Math.PI);
   scene.add(ground);
-  ground.position.z = -105;
+  ground.position.z = -radius*1.1/2;
 
   var light = new THREE.DirectionalLight(0xffffff);
   light.position.set(0,0,50);
