@@ -62,7 +62,7 @@ function init() {
   polaris.position.y = radius;
   celestial.add(polaris);
 
-  var material = new THREE.LineBasicMaterial({ color: 0x888888 }),
+  var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
       geo = new THREE.Geometry(),
       trajectory, i, th;
 
@@ -93,7 +93,7 @@ function init() {
 
   // 指定した日の太陽
   sun_trajectory = new THREE.Line(
-    geo, new THREE.LineBasicMaterial({ color: 0xff7777, linewidth: 2}));
+    geo, new THREE.LineBasicMaterial({ color: 0xff7777, linewidth: 3}));
   celestial.add(sun_trajectory);
 
   var ground = new THREE.Mesh(
