@@ -29,6 +29,49 @@ function newSettings() {
   sun_trajectory.position.y = -radius * Math.sin(angle);
 }
 
+function showLabels() {
+  var material = new THREE.MeshBasicMaterial({color: 'black'}),
+      text, zenith;
+
+  text = new THREE.Mesh(
+    new THREE.TextGeometry(
+      'N', {size:30, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+    material);
+  text.position.set(0, radius+40, 0.1);
+  text.rotation.set(Math.PI, Math.PI, 0);
+  scene.add(text);
+
+  text = new THREE.Mesh(
+    new THREE.TextGeometry(
+      'S', {size:30, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+    material);
+  text.position.set(0, -radius-15, 0.1);
+  text.rotation.set(Math.PI, Math.PI, 0);
+  scene.add(text);
+
+  text = new THREE.Mesh(
+    new THREE.TextGeometry(
+      'E', {size:30, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+    material);
+  text.position.set(radius+30, 0, 0.1);
+  text.rotation.set(Math.PI, Math.PI, 0);
+  scene.add(text);
+
+  text = new THREE.Mesh(
+    new THREE.TextGeometry(
+      'W', {size:30, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+    material);
+  text.position.set(-radius-30, 0, 0.1);
+  text.rotation.set(Math.PI, Math.PI, 0);
+  scene.add(text);
+
+  zenith = new THREE.Mesh(
+    new THREE.SphereGeometry(2),
+    material);
+  zenith.position.set(0, 0, radius);
+  scene.add(zenith);
+}
+
 function init() {
   var arena = $('#arena');
   scene = new THREE.Scene();
@@ -53,13 +96,16 @@ function init() {
   celestial = new THREE.Mesh(
     new THREE.SphereGeometry(radius,30,20),
     new THREE.MeshLambertMaterial(
-      { color: "blue", transparent: true, opacity: 0.1 }));
+      { color: 'blue', transparent: true, opacity: 0.1 }));
   scene.add(celestial);
 
   var polaris = new THREE.Mesh(        // 天の北極
-    new THREE.SphereGeometry(5), 
-    new THREE.MeshLambertMaterial({ color: "black"}));
-  polaris.position.y = radius;
+    new THREE.TetrahedronGeometry(8),
+    new THREE.MeshLambertMaterial({ color: 'yellow'}));
+  polaris.position.y = radius*1.5;
+  celestial.add(polaris);
+  polaris = polaris.clone();
+  polaris.rotation.z = Math.PI/2;
   celestial.add(polaris);
 
   var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
@@ -100,9 +146,10 @@ function init() {
     new THREE.CubeGeometry(600, 600,radius * 1.1),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
-  ground.quaternion.setFromAxisAngle(e1, Math.PI);
-  scene.add(ground);
   ground.position.z = -radius*1.1/2;
+  scene.add(ground);
+
+  showLabels();
 
   var light = new THREE.DirectionalLight(0xffffff);
   light.position.set(0,0,50);
