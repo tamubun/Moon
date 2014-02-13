@@ -10,6 +10,7 @@ var e1 = new THREE.Vector3(1,0,0),
     earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th));
 var celestial,      // 天球
     sun_trajectory,
+    sun,
     cel_radius = 200;
 var earth_radius = 200,
     ground, sun_light;
@@ -24,6 +25,7 @@ function getAngle(phase) {
 function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
       season_phase = $('#date').val()/365.0*2*Math.PI,
+      date_phase,
       angle = getAngle(season_phase);
 
   celestial.quaternion.setFromAxisAngle(e1, latitude);
@@ -31,14 +33,30 @@ function newSettings() {
     cel_radius * Math.cos(angle), 1, cel_radius * Math.cos(angle));
   sun_trajectory.position.y = -cel_radius * Math.sin(angle);
 
+  /* date_phase は、正午から見た時の一日の位相(天の北極、反時計回り)。
+     tan(date_phase) = tan(season_phase) cos(earth_th)
+     但し、season_phase = pi/2, 3pi /2 (夏至、冬至)とかで注意
+     しないといかんけど、今は、season_phaseが丁度、その値にはならないので
+     気にせず突っ切る */
+  date_phase = - Math.atan(Math.tan(season_phase) * Math.cos(earth_th));
+  if ( season_phase >= Math.PI/2 && season_phase <= Math.PI * 3/2 )
+    date_phase -= Math.PI;
+  var axis = new THREE.Vector3(0, Math.cos(latitude), Math.sin(latitude)),
+      v = new THREE.Vector3(0, -Math.sin(angle), Math.cos(angle)),
+      q = new THREE.Quaternion();
+  sun.position.set(
+    cel_radius * v.x, cel_radius * v.y, cel_radius * v.z);
+  q.setFromAxisAngle(axis, -date_phase);
+  celestial.quaternion = q.multiply(celestial.quaternion);
+
   ground.position.set(
     earth_radius * Math.cos(latitude),
     earth_radius * Math.sin(latitude) * Math.sin(earth_th),
     earth_radius * Math.sin(latitude) * Math.cos(earth_th));
   ground.rotation.set(-earth_th, Math.PI/2-latitude, 0);
   sun_light.position.set(
-    earth_radius * 1.5 * Math.cos(season_phase),
-    earth_radius * 1.5 * Math.sin(season_phase),
+    earth_radius * 1.8 * Math.cos(season_phase),
+    earth_radius * 1.8 * Math.sin(season_phase),
     0);
 }
 
@@ -193,10 +211,16 @@ function init0() {
   trajectory.position.y = -cel_radius * Math.sin(earth_th)
   celestial.add(trajectory);
 
-  // 指定した日の太陽
+  // 指定した日の太陽の軌跡
   sun_trajectory = new THREE.Line(
     geo, new THREE.LineBasicMaterial({ color: 0xff7777, linewidth: 3}));
   celestial.add(sun_trajectory);
+
+  sun = new THREE.Mesh(
+    new THREE.SphereGeometry(cel_radius*0.1, cel_radius*0.1, 30, 20),
+    new THREE.MeshLambertMaterial(
+      { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
+  celestial.add(sun);
 
   var ground0 = new THREE.Mesh(
     new THREE.CubeGeometry(600, 600,cel_radius * 1.1),
@@ -301,6 +325,13 @@ function init1() {
   sun_light.target = earth;
   scene.add(sun_light);
   scene.add(new THREE.AmbientLight(0x101010));
+
+  var sun1 = new THREE.Mesh(
+    new THREE.SphereGeometry(earth_radius*0.1, earth_radius*0.1, 30, 20),
+    new THREE.MeshLambertMaterial(
+      { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
+  sun1.position = sun_light.position;
+  scene.add(sun1);
 
   ground = new THREE.Mesh(
     new THREE.PlaneGeometry(earth_radius*0.8, earth_radius*0.8),
