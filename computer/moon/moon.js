@@ -155,7 +155,7 @@ function init0() {
   cameras.push(camera);
   controls.push(control);
 
-  camera.position.set(750, 50, 350); // x: 画面手前向き, y: 右向き, z: 上向き
+  camera.position.set(850, 50, 400); // x: 画面手前向き, y: 右向き, z: 上向き
   camera.up = e3.clone();
 
   control.rotateSpeed = 1.0;
@@ -255,7 +255,7 @@ function init1() {
   cameras.push(camera);
   controls.push(control);
 
-  camera.position.set(800, 50, 150); // x: 画面手前向き, y: 右向き, z: 上向き
+  camera.position.set(900, 50, 200); // x: 画面手前向き, y: 右向き, z: 上向き
   camera.up = e3.clone();
 
   control.target.z = 80;
