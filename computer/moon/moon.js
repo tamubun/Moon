@@ -12,9 +12,10 @@ var celestial,      // 天球
     sun_trajectory,
     sun,
     cel_radius = 200;
-var arena1_scale = 200,
+var ground, earth, node,
+    arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
-    ground, earth, sun_light;
+    sun_light;
 
 /* 赤道上で太陽が南中した時の天頂からの角度。南が正。
    phase は、春分から数えた日を角度に換算したもの */
@@ -327,8 +328,12 @@ function init1() {
   ground = new THREE.Mesh(
     new THREE.PlaneGeometry(arena1_scale*0.8, arena1_scale*0.8),
     new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.7,
-        side: THREE.DoubleSide }));
+      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
+  var ground_back = new THREE.Mesh(
+    new THREE.PlaneGeometry(arena1_scale*0.8, arena1_scale*0.8),
+    new THREE.MeshLambertMaterial({ color: 'black' }));
+  ground_back.rotation.x = Math.PI;
+  ground.add(ground_back);
   earth.add(ground);
 
   showLabels1(ground);
