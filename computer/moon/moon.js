@@ -12,7 +12,8 @@ var celestial,      // 天球
     sun_trajectory,
     sun,
     cel_radius = 200;
-var earth_radius = 200,
+var arena1_scale = 200,
+    earth_radius = arena1_scale / 3,
     ground, earth, sun_light;
 
 /* 赤道上で太陽が南中した時の天頂からの角度。南が正。
@@ -49,8 +50,8 @@ function newSettings() {
   earth.quaternion.setFromAxisAngle(e3, date_phase);
   earth.rotation.x = -earth_th;
   sun_light.position.set(
-    earth_radius * 1.8 * Math.cos(season_phase),
-    earth_radius * 1.8 * Math.sin(season_phase),
+    arena1_scale * 1.8 * Math.cos(season_phase),
+    arena1_scale * 1.8 * Math.sin(season_phase),
     0);
 }
 
@@ -107,7 +108,7 @@ function showLabels1(plane) {
     new THREE.TextGeometry(
       'N', {size:15, height:0.2, curveSegments: 2, font: 'helvetiker'}),
     material);
-  text.position.set(-earth_radius*0.28, 0, 0.1);
+  text.position.set(-arena1_scale*0.28, 0, 0.1);
   text.rotation.z = Math.PI/2;
   plane.add(text);
 
@@ -115,7 +116,7 @@ function showLabels1(plane) {
     new THREE.TextGeometry(
       'S', {size:15, height:0.2, curveSegments: 2, font: 'helvetiker'}),
     material);
-  text.position.set(earth_radius*0.35, 0, 0.1);
+  text.position.set(arena1_scale*0.35, 0, 0.1);
   text.rotation.z = Math.PI/2;
   plane.add(text);
 
@@ -123,7 +124,7 @@ function showLabels1(plane) {
     new THREE.TextGeometry(
       'E', {size:15, height:0.2, curveSegments: 2, font: 'helvetiker'}),
     material);
-  text.position.set(0, earth_radius*0.3, 0.1);
+  text.position.set(0, arena1_scale*0.3, 0.1);
   text.rotation.z = Math.PI/2;
   plane.add(text);
 
@@ -131,7 +132,7 @@ function showLabels1(plane) {
     new THREE.TextGeometry(
       'W', {size:15, height:0.2, curveSegments: 2, font: 'helvetiker'}),
     material);
-  text.position.set(0, -earth_radius*0.37, 0.1);
+  text.position.set(0, -arena1_scale*0.37, 0.1);
   text.rotation.z = Math.PI/2;
   plane.add(text);
 }
@@ -267,8 +268,8 @@ function init1() {
     new THREE.MeshLambertMaterial({ color: 'yellow'}));
   polaris.position.set(
     0,
-    earth_radius * 1.5 * Math.sin(earth_th),
-    earth_radius * 1.5 * Math.cos(earth_th));
+    arena1_scale * 0.7 * Math.sin(earth_th),
+    arena1_scale * 0.7 * Math.cos(earth_th));
   scene.add(polaris);
   polaris = polaris.clone();
   polaris.rotation.z = Math.PI/2;
@@ -316,11 +317,11 @@ function init1() {
   // 黄道
   trajectory = circle.clone();
   trajectory.scale.set(
-    earth_radius * 1.8, earth_radius * 1.8, 1);
+    arena1_scale * 1.8, arena1_scale * 1.8, 1);
   scene.add(trajectory);
 
   ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(earth_radius*0.8, earth_radius*0.8),
+    new THREE.PlaneGeometry(arena1_scale*0.8, arena1_scale*0.8),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9,
         side: THREE.DoubleSide }));
@@ -334,7 +335,7 @@ function init1() {
   scene.add(new THREE.AmbientLight(0x101010));
 
   var sun1 = new THREE.Mesh(
-    new THREE.SphereGeometry(earth_radius*0.1, earth_radius*0.1, 30, 20),
+    new THREE.SphereGeometry(arena1_scale*0.1, arena1_scale*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   sun1.position = sun_light.position;
