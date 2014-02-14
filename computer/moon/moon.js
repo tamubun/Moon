@@ -13,7 +13,7 @@ var celestial,      // 天球
     sun,
     cel_radius = 200;
 var earth_radius = 200,
-    ground, sun_light;
+    ground, earth, sun_light;
 
 /* 赤道上で太陽が南中した時の天頂からの角度。南が正。
    phase は、春分から数えた日を角度に換算したもの */
@@ -32,28 +32,22 @@ function newSettings() {
   sun_trajectory.scale.set(
     cel_radius * Math.cos(angle), 1, cel_radius * Math.cos(angle));
   sun_trajectory.position.y = -cel_radius * Math.sin(angle);
-
-  /* date_phase は、正午から見た時の一日の位相(天の北極、反時計回り)。
-     tan(date_phase) = tan(season_phase) cos(earth_th)
-     但し、season_phase = pi/2, 3pi /2 (夏至、冬至)とかで注意
-     しないといかんけど、今は、season_phaseが丁度、その値にはならないので
-     気にせず突っ切る */
-  date_phase = - Math.atan(Math.tan(season_phase) * Math.cos(earth_th));
-  if ( season_phase >= Math.PI/2 && season_phase <= Math.PI * 3/2 )
-    date_phase -= Math.PI;
-  var axis = new THREE.Vector3(0, Math.cos(latitude), Math.sin(latitude)),
-      v = new THREE.Vector3(0, -Math.sin(angle), Math.cos(angle)),
-      q = new THREE.Quaternion();
   sun.position.set(
-    cel_radius * v.x, cel_radius * v.y, cel_radius * v.z);
-  q.setFromAxisAngle(axis, -date_phase);
-  celestial.quaternion = q.multiply(celestial.quaternion);
+    0, -cel_radius * Math.sin(angle), cel_radius * Math.cos(angle));
 
+  var v = e1.clone() // 太陽の位置を赤道面に射影した時の方向ベクトル
+            .applyAxisAngle(earth_axis, season_phase)
+            .setZ(0)
+            .normalize();
+
+  date_phase = Math.acos(v.x);
+  if ( v.y < 0 )
+    date_phase = -date_phase;
   ground.position.set(
-    earth_radius * Math.cos(latitude),
-    earth_radius * Math.sin(latitude) * Math.sin(earth_th),
-    earth_radius * Math.sin(latitude) * Math.cos(earth_th));
-  ground.rotation.set(-earth_th, Math.PI/2-latitude, 0);
+    earth_radius * Math.cos(latitude), 0, earth_radius * Math.sin(latitude));
+  ground.rotation.set(0, Math.PI/2-latitude, 0);
+  earth.quaternion.setFromAxisAngle(e3, date_phase);
+  earth.rotation.x = -earth_th;
   sun_light.position.set(
     earth_radius * 1.8 * Math.cos(season_phase),
     earth_radius * 1.8 * Math.sin(season_phase),
@@ -268,12 +262,6 @@ function init1() {
   control.dynamicDampingFactor = 0.3;
   control.enabled = true;
 
-  var earth = new THREE.Mesh(
-    new THREE.SphereGeometry(earth_radius, 30, 20),
-    new THREE.MeshLambertMaterial({ color: 0x123c74 }));
-  earth.rotation.x = -earth_th;
-  scene.add(earth);
-
   var polaris = new THREE.Mesh(        // 天の北極
     new THREE.TetrahedronGeometry(8),
     new THREE.MeshLambertMaterial({ color: 'yellow'}));
@@ -285,6 +273,11 @@ function init1() {
   polaris = polaris.clone();
   polaris.rotation.z = Math.PI/2;
   scene.add(polaris);
+
+  earth = new THREE.Mesh(
+    new THREE.SphereGeometry(earth_radius, 30, 20),
+    new THREE.MeshLambertMaterial({ color: 0x123c74 }));
+  scene.add(earth);
 
   var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
       geo = new THREE.Geometry(),
@@ -321,6 +314,15 @@ function init1() {
     earth_radius * 1.8, earth_radius * 1.8, 1);
   scene.add(trajectory);
 
+  ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(earth_radius*0.8, earth_radius*0.8),
+    new THREE.MeshLambertMaterial(
+      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9,
+        side: THREE.DoubleSide }));
+  earth.add(ground);
+
+  showLabels1(ground);
+
   sun_light = new THREE.DirectionalLight(0xffffff, 1.2);
   sun_light.target = earth;
   scene.add(sun_light);
@@ -332,15 +334,6 @@ function init1() {
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   sun1.position = sun_light.position;
   scene.add(sun1);
-
-  ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(earth_radius*0.8, earth_radius*0.8),
-    new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9,
-        side: THREE.DoubleSide }));
-  scene.add(ground);
-
-  showLabels1(ground);
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   renderer.shadowMapEnabled = true;
