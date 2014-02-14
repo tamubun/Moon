@@ -13,7 +13,7 @@ var celestial,      // 天球
     sun,
     cel_radius = 200;
 var arena1_scale = 200,
-    earth_radius = arena1_scale / 3,
+    earth_radius = arena1_scale / 2.5,
     ground, earth, sun_light;
 
 /* 赤道上で太陽が南中した時の天頂からの角度。南が正。
@@ -26,10 +26,14 @@ function getAngle(phase) {
 function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
       season_phase = $('#date').val()/365.0*2*Math.PI,
-      date_phase,
-      angle = getAngle(season_phase);
+      date_phase = $('#time').val()/24.0*2*Math.PI - Math.PI,
+      year_phase,
+      angle = getAngle(season_phase),
+      q = new THREE.Quaternion();
 
+  q.setFromAxisAngle(e2, -date_phase);
   celestial.quaternion.setFromAxisAngle(e1, latitude);
+  celestial.quaternion.multiply(q);
   sun_trajectory.scale.set(
     cel_radius * Math.cos(angle), 1, cel_radius * Math.cos(angle));
   sun_trajectory.position.y = -cel_radius * Math.sin(angle);
@@ -41,13 +45,13 @@ function newSettings() {
             .setZ(0)
             .normalize();
 
-  date_phase = Math.acos(v.x);
+  year_phase = Math.acos(v.x);
   if ( v.y < 0 )
-    date_phase = -date_phase;
+    year_phase = -year_phase;
   ground.position.set(
     earth_radius * Math.cos(latitude), 0, earth_radius * Math.sin(latitude));
   ground.rotation.set(0, Math.PI/2-latitude, 0);
-  earth.quaternion.setFromAxisAngle(e3, date_phase);
+  earth.quaternion.setFromAxisAngle(e3, year_phase + date_phase);
   earth.rotation.x = -earth_th;
   sun_light.position.set(
     arena1_scale * 1.8 * Math.cos(season_phase),
@@ -323,7 +327,7 @@ function init1() {
   ground = new THREE.Mesh(
     new THREE.PlaneGeometry(arena1_scale*0.8, arena1_scale*0.8),
     new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9,
+      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.7,
         side: THREE.DoubleSide }));
   earth.add(ground);
 
