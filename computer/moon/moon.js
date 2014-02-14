@@ -274,20 +274,25 @@ function init1() {
   polaris.rotation.z = Math.PI/2;
   scene.add(polaris);
 
-  earth = new THREE.Mesh(
-    new THREE.SphereGeometry(earth_radius, 30, 20),
-    new THREE.MeshLambertMaterial({ color: 0x123c74 }));
+  earth = new THREE.Object3D();
   scene.add(earth);
+  var texture = THREE.ImageUtils.loadTexture(
+        '/computer/moon/land_ocean_ice_cloud_2048.jpeg'),
+      sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(earth_radius, 30, 20),
+        new THREE.MeshLambertMaterial({ map: texture, overdraw: true }));
+  sphere.rotation.set(Math.PI/2, Math.PI/0.8, 0);
+  earth.add(sphere);
 
   var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
       geo = new THREE.Geometry(),
-      trajectory, i, th;
+      trajectory, i, th, circle;
 
   for ( i = 0; i < 41; ++i ) {
     th = 2*Math.PI / 40 * i;
     geo.vertices.push(new THREE.Vector3(Math.cos(th), Math.sin(th), 0));
   }
-  var circle = new THREE.Line(geo, material);
+  circle = new THREE.Line(geo, material);
 
   // 赤道
   trajectory = circle.clone();
