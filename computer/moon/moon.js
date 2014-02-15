@@ -17,42 +17,43 @@ var ground, earth, node,
     earth_radius = arena1_scale / 2.5,
     sun_light;
 
-/* 赤道上で太陽が南中した時の天頂からの角度。南が正。
-   phase は、春分から数えた日を角度に換算したもの */
-function getAngle(phase) {
-  var pos = e1.clone().applyAxisAngle(earth_axis, phase);
-  return Math.asin(pos.z);
+/* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルを
+   赤道上で春分点を向いた地表Pから見た時の
+     th: 南中時の天頂角(南が正)
+     phi: 天の北極回りの回転角(天頂方向が0、東が正)
+   で表現する。正午からphiに相当する時間だけ巻き戻せば、そのベクトルの
+   方向にある星がPで南中する */
+function eclipticToGround(v) {
+  var v2 = v.clone().applyAxisAngle(e1, earth_th), // 赤道座標から見た成分
+      th, phi;
+  th = -Math.asin(v2.z);
+  v2.setZ(0).normalize();
+  phi = Math.acos(v2.x);
+  if ( v2.y < 0 )
+    phi = -phi;
+  return { th: th, phi: phi };
 }
 
 function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
       season_phase = $('#date').val()/365.0*2*Math.PI,
       date_phase = $('#time').val()/24.0*2*Math.PI - Math.PI,
-      year_phase,
-      angle = getAngle(season_phase),
+      angles = eclipticToGround(e1.clone().applyAxisAngle(e3, season_phase)),
       q = new THREE.Quaternion();
 
   q.setFromAxisAngle(e2, -date_phase);
   celestial.quaternion.setFromAxisAngle(e1, latitude);
   celestial.quaternion.multiply(q);
   sun_trajectory.scale.set(
-    cel_radius * Math.cos(angle), 1, cel_radius * Math.cos(angle));
-  sun_trajectory.position.y = -cel_radius * Math.sin(angle);
+    cel_radius * Math.cos(angles.th), 1, cel_radius * Math.cos(angles.th));
+  sun_trajectory.position.y = -cel_radius * Math.sin(angles.th);
   sun.position.set(
-    0, -cel_radius * Math.sin(angle), cel_radius * Math.cos(angle));
+    0, -cel_radius * Math.sin(angles.th), cel_radius * Math.cos(angles.th));
 
-  var v = e1.clone() // 太陽の位置を赤道面に射影した時の方向ベクトル
-            .applyAxisAngle(earth_axis, season_phase)
-            .setZ(0)
-            .normalize();
-
-  year_phase = Math.acos(v.x);
-  if ( v.y < 0 )
-    year_phase = -year_phase;
   ground.position.set(
     earth_radius * Math.cos(latitude), 0, earth_radius * Math.sin(latitude));
   ground.rotation.set(0, Math.PI/2-latitude, 0);
-  earth.quaternion.setFromAxisAngle(e3, year_phase + date_phase);
+  earth.quaternion.setFromAxisAngle(e3, angles.phi + date_phase);
   earth.rotation.x = -earth_th;
   sun_light.position.set(
     arena1_scale * 1.8 * Math.cos(season_phase),
