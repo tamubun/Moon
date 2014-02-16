@@ -7,15 +7,17 @@ var e1 = new THREE.Vector3(1,0,0),
     e3 = new THREE.Vector3(0,0,1),
     zero = new THREE.Vector3(0,0,0),
     earth_th = 23.4 / 180.0 * Math.PI,
-    earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th));
+    earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th)),
+    moon_th = 5.1 / 180.0 * Math.PI;
 var celestial,      // 天球
     sun_trajectory,
-    sun,
+    moon_trajectory,
+    sun, moon,
     cel_radius = 200;
 var ground, earth, node,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
-    sun_light;
+    sun_light, moons_path;
 
 /* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルを
    赤道上で春分点を向いた地表Pから見た時の
@@ -36,9 +38,11 @@ function eclipticToGround(v) {
 
 function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
-      season_phase = $('#date').val()/365.0*2*Math.PI,
+      year_phase = $('#date').val()/365.0*2*Math.PI,
       date_phase = $('#time').val()/24.0*2*Math.PI - Math.PI,
-      angles = eclipticToGround(e1.clone().applyAxisAngle(e3, season_phase)),
+      lunar_phase = $('#lunar-phase').val()/28*2*Math.PI,
+      node_phase =  $('#node').val()/180*Math.PI,
+      angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase)),
       q = new THREE.Quaternion();
 
   q.setFromAxisAngle(e2, -date_phase);
@@ -56,9 +60,33 @@ function newSettings() {
   earth.quaternion.setFromAxisAngle(e3, angles.phi + date_phase);
   earth.rotation.x = -earth_th;
   sun_light.position.set(
-    arena1_scale * 1.8 * Math.cos(season_phase),
-    arena1_scale * 1.8 * Math.sin(season_phase),
+    arena1_scale * 1.8 * Math.cos(year_phase),
+    arena1_scale * 1.8 * Math.sin(year_phase),
     0);
+
+  q = new THREE.Quaternion();
+  q.setFromAxisAngle(e1, moon_th);
+  moons_path.quaternion.setFromAxisAngle(e3, -node_phase).multiply(q);
+  node.position = e1.clone() // 月の位置の計算途中で昇交点の位置を算出
+                    .applyQuaternion(moons_path.quaternion)
+                    .multiplyScalar(arena1_scale*1.4);
+  q.setFromAxisAngle(e3, lunar_phase + node_phase + angles.phi);
+  moons_path.quaternion.multiply(q);
+
+  var moon_vec = // 赤道上12時における月の方向 (arena1での座標系)
+        e1.clone().applyQuaternion(moons_path.quaternion),
+      moon_angles = eclipticToGround(moon_vec);
+  moon_trajectory.scale.set(
+    cel_radius * Math.cos(moon_angles.th),
+    1,
+    cel_radius * Math.cos(moon_angles.th));
+  moon_trajectory.position.y = -cel_radius * Math.sin(moon_angles.th);
+  moon.position.set(
+    cel_radius * Math.cos(moon_angles.th) *
+      Math.sin(moon_angles.phi - year_phase),
+    -cel_radius * Math.sin(moon_angles.th),
+    cel_radius * Math.cos(moon_angles.th) *
+      Math.cos(moon_angles.phi - year_phase));
 }
 
 function showLabels0() {
@@ -143,6 +171,7 @@ function showLabels1(plane) {
   plane.add(text);
 }
 
+/* arena0 の初期設定 */
 function init0() {
   var arena = $('#arena0'),
       scene = new THREE.Scene(),
@@ -212,16 +241,25 @@ function init0() {
   trajectory.position.y = -cel_radius * Math.sin(earth_th)
   celestial.add(trajectory);
 
-  // 指定した日の太陽の軌跡
+  // 指定した日の太陽の軌跡と月の軌跡
   sun_trajectory = new THREE.Line(
     geo, new THREE.LineBasicMaterial({ color: 0xff7777, linewidth: 3}));
   celestial.add(sun_trajectory);
+  moon_trajectory = new THREE.Line(
+    geo, new THREE.LineBasicMaterial({ color: 'white', linewidth: 2}));
+  celestial.add(moon_trajectory);
 
   sun = new THREE.Mesh(
     new THREE.SphereGeometry(cel_radius*0.1, cel_radius*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   celestial.add(sun);
+
+  moon = new THREE.Mesh(
+    new THREE.SphereGeometry(cel_radius*0.07, cel_radius*0.07, 30, 20),
+    new THREE.MeshLambertMaterial(
+      { ambient: 0xbbbbbb, color: 'gray' }));
+  celestial.add(moon);
 
   var ground0 = new THREE.Mesh(
     new THREE.CubeGeometry(600, 600,cel_radius * 1.1),
@@ -243,6 +281,7 @@ function init0() {
   $('#arena0').append(renderer.domElement);
 }
 
+/* arena1 の初期設定 */
 function init1() {
   var arena = $('#arena1'),
       scene = new THREE.Scene(),
@@ -350,6 +389,26 @@ function init1() {
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   sun1.position = sun_light.position;
   scene.add(sun1);
+
+  // 白道
+  moons_path = new THREE.Object3D();
+  scene.add(moons_path);
+  trajectory = circle.clone();
+  trajectory.scale.set(
+    arena1_scale * 1.4, arena1_scale * 1.4, 1);
+  moons_path.add(trajectory);
+
+  var moon1 = new THREE.Mesh(
+    new THREE.SphereGeometry(arena1_scale*0.07, 30, 20),
+    new THREE.MeshLambertMaterial({ color: 'gray' }));
+  moon1.position.set(arena1_scale*1.4, 0, 0);
+  moons_path.add(moon1);
+
+  // 昇交点
+  node = new THREE.Mesh(
+    new THREE.SphereGeometry(3, 30, 20),
+    new THREE.MeshLambertMaterial({ color: 'black' }));
+  scene.add(node);
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   renderer.shadowMapEnabled = true;
