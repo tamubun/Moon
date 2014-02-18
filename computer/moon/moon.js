@@ -12,7 +12,7 @@ var e1 = new THREE.Vector3(1,0,0),
 var celestial,      // 天球
     sun_trajectory,
     moon_trajectory,
-    sun, moon,
+    sun, moon0,
     cel_radius = 200;
 var ground, earth, moon1,
     arena1_scale = 200,
@@ -88,7 +88,7 @@ function newSettings() {
     1,
     cel_radius * 0.95 * Math.cos(moon_angles.th));
   moon_trajectory.position.y = -cel_radius * 0.95 * Math.sin(moon_angles.th);
-  moon.position.set(
+  moon0.position.set(
     cel_radius * 0.95 * Math.cos(moon_angles.th) *
       Math.sin(moon_angles.phi - year_phase),
     -cel_radius * 0.95 * Math.sin(moon_angles.th),
@@ -262,11 +262,11 @@ function init0() {
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   celestial.add(sun);
 
-  moon = new THREE.Mesh(
+  moon0 = new THREE.Mesh(
     new THREE.SphereGeometry(cel_radius*0.07, cel_radius*0.07, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'gray' }));
-  celestial.add(moon);
+  celestial.add(moon0);
 
   var ground0 = new THREE.Mesh(
     new THREE.CubeGeometry(600, 600,cel_radius * 1.1),
