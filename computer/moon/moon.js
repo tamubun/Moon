@@ -423,12 +423,45 @@ function init1() {
   $('#arena1').append(renderer.domElement);
 }
 
+/* arena1 の初期設定 */
+function init2() {
+  var arena = $('#arena2'),
+      scene = new THREE.Scene(),
+      camera = new THREE.PerspectiveCamera(
+        45, arena.innerWidth() / arena.innerHeight(), 1, 2000),
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+
+  arena.css({top: '60px', left: '550px'});
+
+  scenes.push(scene);
+  renderers.push(renderer);
+  cameras.push(camera);
+
+  camera.position.set(0,500,30);
+  camera.up = e3.clone();
+  camera.lookAt(zero);
+
+  var tsuki = new THREE.Mesh(
+    new THREE.SphereGeometry(150, 150, 30, 20),
+    new THREE.MeshLambertMaterial({ color: 'gray' }));
+  scene.add(tsuki);
+
+  var light = new THREE.DirectionalLight(0xffffff,1.5);
+  light.position.set(-50,-10,-30);
+  light.target = tsuki;
+  scene.add(light);
+
+  renderer.setSize(arena.innerWidth(), arena.innerHeight());
+  $('#arena2').append(renderer.domElement);
+}
+
 function animate() {
   requestAnimationFrame(animate);
   for ( var i = 0; i < 2; ++i ) {
     controls[i].update();
     renderers[i].render(scenes[i], cameras[i]);
   }
+  renderers[2].render(scenes[2], cameras[2]);
 }
 
 $(function() {
@@ -436,6 +469,7 @@ $(function() {
 
   init0();
   init1();
+  init2();
 
   newSettings();
 
