@@ -14,17 +14,16 @@ var celestial,      // 天球
     moon_trajectory,
     sun, moon,
     cel_radius = 200;
-var ground, earth, node,
+var ground, earth, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
     sun_light, moons_path;
 
-/* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルを
-   赤道上で春分点を向いた地表Pから見た時の
+/* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
+   赤道上にある地表Pから見た時の
      th: 南中時の天頂角(南が正)
-     phi: 天の北極回りの回転角(天頂方向が0、東が正)
-   で表現する。正午からphiに相当する時間だけ巻き戻せば、そのベクトルの
-   方向にある星がPで南中する */
+     phi: Pが春分点を向いている時に天の北極回りの回転角(天頂方向が0、東が正)
+   で表現する。正午からphiに相当する時間だけ巻き戻せば、その星がPで南中する */
 function eclipticToGround(v) {
   var v2 = v.clone().applyAxisAngle(e1, earth_th), // 赤道座標から見た成分
       th, phi;
@@ -40,7 +39,7 @@ function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
       year_phase = $('#date').val()/365.0*2*Math.PI,
       date_phase = $('#time').val()/24.0*2*Math.PI - Math.PI,
-      lunar_phase = $('#lunar-phase').val()/28*2*Math.PI,
+      lunar_phase = $('#lunar-phase').val()/360*2*Math.PI,
       node_phase =  $('#node').val()/180*Math.PI,
       angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase)),
       q = new THREE.Quaternion();
@@ -64,18 +63,26 @@ function newSettings() {
     arena1_scale * 1.8 * Math.sin(year_phase),
     0);
 
-  q = new THREE.Quaternion();
   q.setFromAxisAngle(e1, moon_th);
   moons_path.quaternion.setFromAxisAngle(e3, -node_phase).multiply(q);
-  node.position = e1.clone() // 月の位置の計算途中で昇交点の位置を算出
-                    .applyQuaternion(moons_path.quaternion)
-                    .multiplyScalar(arena1_scale*1.4);
-  q.setFromAxisAngle(e3, lunar_phase + node_phase + angles.phi);
-  moons_path.quaternion.multiply(q);
-
-  var moon_vec = // 赤道上12時における月の方向 (arena1での座標系)
-        e1.clone().applyQuaternion(moons_path.quaternion),
-      moon_angles = eclipticToGround(moon_vec);
+  var d = lunar_phase + node_phase + year_phase, // 昇交点と月との黄経差
+      psi,      // 昇交点からの月の軌道上での回転角
+      moon_vec; // 月の方向 (arena1での座標系)
+  d = d - 2*Math.PI * Math.floor(d/2.0/Math.PI);
+  if ( Math.abs(Math.cos(d)) < 0.001 )
+    psi = Math.PI / 2;
+  else
+    psi = Math.atan(Math.tan(d) / Math.cos(moon_th));
+  if ( d > Math.PI/2 && d <= Math.PI * 3.0/2.0 )
+    psi = Math.PI + psi;
+  q.setFromAxisAngle(e3, psi);
+  q.multiplyQuaternions(moons_path.quaternion, q);
+  moon_vec = e1.clone().applyQuaternion(q);
+  moon1.position.set(
+    1.4 * arena1_scale * moon_vec.x,
+    1.4 * arena1_scale * moon_vec.y,
+    1.4 * arena1_scale * moon_vec.z);
+  var moon_angles = eclipticToGround(moon_vec);
   moon_trajectory.scale.set(
     cel_radius * Math.cos(moon_angles.th),
     1,
@@ -398,17 +405,18 @@ function init1() {
     arena1_scale * 1.4, arena1_scale * 1.4, 1);
   moons_path.add(trajectory);
 
-  var moon1 = new THREE.Mesh(
-    new THREE.SphereGeometry(arena1_scale*0.07, 30, 20),
-    new THREE.MeshLambertMaterial({ color: 'gray' }));
-  moon1.position.set(arena1_scale*1.4, 0, 0);
-  moons_path.add(moon1);
-
   // 昇交点
-  node = new THREE.Mesh(
+  var node = new THREE.Mesh(
     new THREE.SphereGeometry(3, 30, 20),
     new THREE.MeshLambertMaterial({ color: 'black' }));
-  scene.add(node);
+  node.position.x = arena1_scale * 1.4;
+  moons_path.add(node);
+
+  moon1 = new THREE.Mesh(
+    new THREE.SphereGeometry(arena1_scale*0.07, 30, 20),
+    new THREE.MeshLambertMaterial({ color: 'gray' }));
+  moon1.position.x = arena1_scale * 1.4;
+  scene.add(moon1);
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   renderer.shadowMapEnabled = true;
