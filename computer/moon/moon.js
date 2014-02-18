@@ -284,7 +284,6 @@ function init0() {
   scene.add(new THREE.AmbientLight(0x404040));
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
-  renderer.shadowMapEnabled = true;
   $('#arena0').append(renderer.domElement);
 }
 
@@ -419,7 +418,6 @@ function init1() {
   scene.add(moon1);
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
-  renderer.shadowMapEnabled = true;
   $('#arena1').append(renderer.domElement);
 }
 
