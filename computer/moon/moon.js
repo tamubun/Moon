@@ -84,15 +84,15 @@ function newSettings() {
     1.4 * arena1_scale * moon_vec.z);
   var moon_angles = eclipticToGround(moon_vec);
   moon_trajectory.scale.set(
-    cel_radius * Math.cos(moon_angles.th),
+    cel_radius * 0.95 * Math.cos(moon_angles.th),
     1,
-    cel_radius * Math.cos(moon_angles.th));
-  moon_trajectory.position.y = -cel_radius * Math.sin(moon_angles.th);
+    cel_radius * 0.95 * Math.cos(moon_angles.th));
+  moon_trajectory.position.y = -cel_radius * 0.95 * Math.sin(moon_angles.th);
   moon.position.set(
-    cel_radius * Math.cos(moon_angles.th) *
+    cel_radius * 0.95 * Math.cos(moon_angles.th) *
       Math.sin(moon_angles.phi - year_phase),
-    -cel_radius * Math.sin(moon_angles.th),
-    cel_radius * Math.cos(moon_angles.th) *
+    -cel_radius * 0.95 * Math.sin(moon_angles.th),
+    cel_radius * 0.95 * Math.cos(moon_angles.th) *
       Math.cos(moon_angles.phi - year_phase));
 }
 
