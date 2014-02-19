@@ -18,6 +18,7 @@ var ground, earth, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
     sun_light, moons_path;
+var moon2;
 
 /* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
    赤道上にある地表Pから見た時の
@@ -421,7 +422,7 @@ function init1() {
   $('#arena1').append(renderer.domElement);
 }
 
-/* arena1 の初期設定 */
+/* arena2 の初期設定 */
 function init2() {
   var arena = $('#arena2'),
       scene = new THREE.Scene(),
@@ -435,18 +436,19 @@ function init2() {
   renderers.push(renderer);
   cameras.push(camera);
 
-  camera.position.set(0,500,30);
+  camera.position.set(0,0,0);
   camera.up = e3.clone();
-  camera.lookAt(zero);
 
-  var tsuki = new THREE.Mesh(
-    new THREE.SphereGeometry(150, 150, 30, 20),
+  moon2 = new THREE.Mesh(
+    new THREE.SphereGeometry(0.6, 30, 20),
     new THREE.MeshLambertMaterial({ color: 'gray' }));
-  scene.add(tsuki);
+  moon2.position.set(2,0,0);
+  scene.add(moon2);
+  camera.lookAt(moon2.position);
 
   var light = new THREE.DirectionalLight(0xffffff,1.5);
-  light.position.set(-50,-10,-30);
-  light.target = tsuki;
+  light.position.set(-10,20,-30);
+  light.target = moon2;
   scene.add(light);
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
