@@ -1,6 +1,7 @@
 'use strict';
 var debug = false;
 
+var animate;
 var scenes = [], renderers = [], cameras = [], controls = [];
 var e1 = new THREE.Vector3(1,0,0),
     e2 = new THREE.Vector3(0,1,0),
@@ -421,21 +422,54 @@ function init1() {
   $('#arena1').append(renderer.domElement);
 }
 
-function animate() {
-  requestAnimationFrame(animate);
+function update() {
+  if ( animate )
+    requestAnimationFrame(update);
+
   for ( var i = 0; i < 2; ++i ) {
     controls[i].update();
     renderers[i].render(scenes[i], cameras[i]);
   }
 }
 
+function setHandlers() {
+
+  $('#arena0, #arena1, form').mousedown(function() {
+    animate = true;
+    update();
+  });
+
+  $('#arena0, #arena1, form').mouseup(function() {
+    animate = false;
+  });
+
+  $('#arena0, #arena1').on('mousewheel', function() {
+    update();
+  });
+
+  $('#arena0, #arena1').on('DOMMouseScroll', function() {
+    update();
+  });
+
+  $('#arena0, #arena1, form').on('touchstart', function() {
+    animate = true;
+    update();
+  });
+
+  $('#arena0, #arena1, form').on('touchend', function() {
+    animate = false;
+  });
+}
+
 $(function() {
   $('.settings').change(newSettings);
+
+  setHandlers();
 
   init0();
   init1();
 
+  animate = false;
   newSettings();
-
-  animate();
+  update();
 });
