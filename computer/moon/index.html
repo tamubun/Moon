@@ -11,13 +11,28 @@
 <script src='../../js/TrackballControls.js'></script>
 <script src="../../js/helvetiker_regular.typeface.js"></script>
 <script src='moon.js'></script>
+<style>
+#arena0, #arena1 {
+  width: 600px;
+  height: 550px;
+  float:left;
+}
+#arena2 {
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  border: solid 1px;
+  background-color: black;
+}
+</style>
 </head>
 <body>
 <div data-role='page'>
   <div data-role='header'><h1>月の満ち欠けと緯度</h1></div>
   <div data-role='content'>
-    <div id='arena0' style='width: 600px; height: 550px; float:left;'></div>
-    <div id='arena1' style='width: 600px; height: 550px; float:left;'></div>
+    <div id='arena0'></div>
+    <div id='arena1'></div>
+    <div id='arena2' style=''></div>
     <form>
       <div data-role="fieldcontain" style="padding-top: 30px;">
 	<label for='latitude'>緯度:</label>
@@ -33,7 +48,7 @@
       </div>
       <div data-role="fieldcontain">
 	<label for='lunar-phase'>月の位置:</label>
-	<input name='lunar-phase' id='lunar-phase' class='settings' min='0' max='360' value='30' type='range'>
+	<input name='lunar-phase' id='lunar-phase' class='settings' min='0' max='360' value='45' type='range'>
       </div>
       <div data-role="fieldcontain">
 	<label for='node'>昇交点の位置:</label>
