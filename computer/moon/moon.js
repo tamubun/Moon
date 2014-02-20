@@ -17,8 +17,8 @@ var celestial,      // 天球
 var ground, earth, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
-    sun_light, moons_path;
-var moon2;
+    sun_light1, moons_path;
+var moon2, sun_light2, ambient;
 
 /* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
    赤道上にある地表Pから見た時の
@@ -43,7 +43,8 @@ function newSettings() {
       lunar_phase = $('#lunar-phase').val()/360*2*Math.PI,
       node_phase =  $('#node').val()/180*Math.PI,
       angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase)),
-      q = new THREE.Quaternion();
+      q = new THREE.Quaternion(),
+      v = new THREE.Vector3();
 
   q.setFromAxisAngle(e2, -date_phase);
   celestial.quaternion.setFromAxisAngle(e1, latitude);
@@ -59,7 +60,7 @@ function newSettings() {
   ground.rotation.set(0, Math.PI/2-latitude, 0);
   earth.quaternion.setFromAxisAngle(e3, angles.phi + date_phase);
   earth.rotation.x = -earth_th;
-  sun_light.position.set(
+  sun_light1.position.set(
     arena1_scale * 1.8 * Math.cos(year_phase),
     arena1_scale * 1.8 * Math.sin(year_phase),
     0);
@@ -89,12 +90,19 @@ function newSettings() {
     1,
     cel_radius * 0.95 * Math.cos(moon_angles.th));
   moon_trajectory.position.y = -cel_radius * 0.95 * Math.sin(moon_angles.th);
-  moon0.position.set(
-    cel_radius * 0.95 * Math.cos(moon_angles.th) *
-      Math.sin(moon_angles.phi - year_phase),
-    -cel_radius * 0.95 * Math.sin(moon_angles.th),
-    cel_radius * 0.95 * Math.cos(moon_angles.th) *
-      Math.cos(moon_angles.phi - year_phase));
+  v.set(
+    Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - year_phase),
+    -Math.sin(moon_angles.th),
+    Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - year_phase));
+  moon0.position = v.clone().multiplyScalar(cel_radius * 0.95);
+
+  moon2.position =
+    v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(2);
+  cameras[2].lookAt(moon2.position);
+  sun_light2.position
+    .set(0, -Math.sin(angles.th), Math.cos(angles.th))
+    .applyQuaternion(celestial.quaternion)
+    .multiplyScalar(500);
 }
 
 function showLabels0() {
@@ -385,16 +393,16 @@ function init1() {
 
   showLabels1(ground);
 
-  sun_light = new THREE.DirectionalLight(0xffffff, 1.2);
-  sun_light.target = earth;
-  scene.add(sun_light);
+  sun_light1 = new THREE.DirectionalLight(0xffffff, 1.2);
+  sun_light1.target = earth;
+  scene.add(sun_light1);
   scene.add(new THREE.AmbientLight(0x101010));
 
   var sun1 = new THREE.Mesh(
     new THREE.SphereGeometry(arena1_scale*0.1, arena1_scale*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
-  sun1.position = sun_light.position;
+  sun1.position = sun_light1.position;
   scene.add(sun1);
 
   // 白道
@@ -442,14 +450,13 @@ function init2() {
   moon2 = new THREE.Mesh(
     new THREE.SphereGeometry(0.6, 30, 20),
     new THREE.MeshLambertMaterial({ color: 'gray' }));
-  moon2.position.set(2,0,0);
   scene.add(moon2);
-  camera.lookAt(moon2.position);
 
-  var light = new THREE.DirectionalLight(0xffffff,1.5);
-  light.position.set(-10,20,-30);
-  light.target = moon2;
-  scene.add(light);
+  sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
+  sun_light2.target = camera;
+  scene.add(sun_light2);
+
+  scene.add(new THREE.AmbientLight(0x181818));
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena2').append(renderer.domElement);
