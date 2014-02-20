@@ -267,13 +267,13 @@ function init0() {
   celestial.add(moon_trajectory);
 
   sun = new THREE.Mesh(
-    new THREE.SphereGeometry(cel_radius*0.1, cel_radius*0.1, 30, 20),
+    new THREE.SphereGeometry(cel_radius*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   celestial.add(sun);
 
   moon0 = new THREE.Mesh(
-    new THREE.SphereGeometry(cel_radius*0.07, cel_radius*0.07, 30, 20),
+    new THREE.SphereGeometry(cel_radius*0.07, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'gray' }));
   celestial.add(moon0);
@@ -400,7 +400,7 @@ function init1() {
   scene.add(new THREE.AmbientLight(0x101010));
 
   var sun1 = new THREE.Mesh(
-    new THREE.SphereGeometry(arena1_scale*0.1, arena1_scale*0.1, 30, 20),
+    new THREE.SphereGeometry(arena1_scale*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   sun1.position = sun_light1.position;
@@ -416,7 +416,7 @@ function init1() {
 
   // 昇交点
   var node = new THREE.Mesh(
-    new THREE.SphereGeometry(3, 30, 20),
+    new THREE.SphereGeometry(3),
     new THREE.MeshLambertMaterial({ color: 'black' }));
   node.position.x = arena1_scale * 1.4;
   moons_path.add(node);
