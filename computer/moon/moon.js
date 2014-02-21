@@ -1,7 +1,7 @@
 'use strict';
 var debug = false;
-
 var animate;
+
 var scenes = [], renderers = [], cameras = [], controls = [];
 var e1 = new THREE.Vector3(1,0,0),
     e2 = new THREE.Vector3(0,1,0),
@@ -98,12 +98,11 @@ function newSettings() {
   moon0.position = v.clone().multiplyScalar(cel_radius * 0.95);
 
   moon2.position =
-    v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(2);
+    v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20);
   cameras[2].lookAt(moon2.position);
   sun_light2.position
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
-    .applyQuaternion(celestial.quaternion)
-    .multiplyScalar(500);
+    .applyQuaternion(celestial.quaternion);
 }
 
 function showLabels0() {
@@ -449,16 +448,18 @@ function init2() {
   camera.up = e3.clone();
 
   moon2 = new THREE.Mesh(
-    new THREE.SphereGeometry(0.6, 30, 20),
-    new THREE.MeshLambertMaterial({ color: 'gray' }));
+    new THREE.SphereGeometry(6, 30, 20),
+    new THREE.MeshLambertMaterial({ color: 0xffffff }));
   scene.add(moon2);
 
-  sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
-  sun_light2.target = camera;
+  sun_light2 = new THREE.DirectionalLight(0xffffff,1);
   scene.add(sun_light2);
-
-  scene.add(new THREE.AmbientLight(0x181818));
-
+/*
+  // こんな感じにすれば、日中に太陽の光で月が見えないようにできる
+  scene.add(new THREE.AmbientLight('blue'));
+  scene.fog = new THREE.FogExp2('blue',0.08);
+  renderer.setClearColor('blue');
+*/
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena2').append(renderer.domElement);
 }
