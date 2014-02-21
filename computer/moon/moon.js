@@ -47,6 +47,9 @@ function newSettings() {
       q = new THREE.Quaternion(),
       v = new THREE.Vector3();
 
+  lunar_phase +=
+    (+$('#date').val()+($('#time').val()-12)/24.0)/29.5306*2*Math.PI;
+
   q.setFromAxisAngle(e2, -date_phase);
   celestial.quaternion.setFromAxisAngle(e1, latitude);
   celestial.quaternion.multiply(q);
