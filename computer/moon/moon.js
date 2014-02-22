@@ -54,19 +54,19 @@ function newSettings() {
   celestial.quaternion.setFromAxisAngle(e1, latitude);
   celestial.quaternion.multiply(q);
   sun_trajectory.scale.set(
-    cel_radius * Math.cos(angles.th), 1, cel_radius * Math.cos(angles.th));
-  sun_trajectory.position.y = -cel_radius * Math.sin(angles.th);
+    Math.cos(angles.th) * cel_radius, 1, Math.cos(angles.th) * cel_radius);
+  sun_trajectory.position.y = -Math.sin(angles.th) * cel_radius;
   sun.position.set(
-    0, -cel_radius * Math.sin(angles.th), cel_radius * Math.cos(angles.th));
+    0, -Math.sin(angles.th) * cel_radius, Math.cos(angles.th) * cel_radius);
 
   ground.position.set(
-    earth_radius * Math.cos(latitude), 0, earth_radius * Math.sin(latitude));
+    Math.cos(latitude) * earth_radius, 0, Math.sin(latitude) * earth_radius);
   ground.rotation.set(0, Math.PI/2-latitude, 0);
   earth.quaternion.setFromAxisAngle(e3, angles.phi + date_phase);
   earth.rotation.x = -earth_th;
   sun_light1.position.set(
-    arena1_scale * 1.8 * Math.cos(year_phase),
-    arena1_scale * 1.8 * Math.sin(year_phase),
+    Math.cos(year_phase) * arena1_scale * 1.8,
+    Math.sin(year_phase) * arena1_scale * 1.8,
     0);
 
   q.setFromAxisAngle(e1, moon_th);
@@ -90,10 +90,10 @@ function newSettings() {
     1.4 * arena1_scale * moon_vec.z);
   var moon_angles = eclipticToGround(moon_vec);
   moon_trajectory.scale.set(
-    cel_radius * 0.95 * Math.cos(moon_angles.th),
+    Math.cos(moon_angles.th) * cel_radius * 0.95,
     1,
-    cel_radius * 0.95 * Math.cos(moon_angles.th));
-  moon_trajectory.position.y = -cel_radius * 0.95 * Math.sin(moon_angles.th);
+    Math.cos(moon_angles.th) * cel_radius * 0.95);
+  moon_trajectory.position.y = -Math.sin(moon_angles.th) * cel_radius * 0.95;
   v.set(
     Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - year_phase),
     -Math.sin(moon_angles.th),
@@ -249,15 +249,15 @@ function init0() {
   // 夏至
   trajectory = circle.clone();
   trajectory.scale.set(
-    cel_radius * Math.cos(earth_th), 1, cel_radius * Math.cos(earth_th));
-  trajectory.position.y = cel_radius * Math.sin(earth_th)
+    Math.cos(earth_th) * cel_radius, 1, Math.cos(earth_th) * cel_radius);
+  trajectory.position.y = Math.sin(earth_th) * cel_radius;
   celestial.add(trajectory);
 
   // 冬至
   trajectory = circle.clone();
   trajectory.scale.set(
-    cel_radius * Math.cos(earth_th), 1, cel_radius * Math.cos(earth_th));
-  trajectory.position.y = -cel_radius * Math.sin(earth_th)
+    Math.cos(earth_th) * cel_radius, 1, Math.cos(earth_th) * cel_radius);
+  trajectory.position.y = -Math.sin(earth_th) * cel_radius;
   celestial.add(trajectory);
 
   // 指定した日の太陽の軌跡と月の軌跡
@@ -331,8 +331,8 @@ function init1() {
     new THREE.MeshLambertMaterial({ color: 'yellow'}));
   polaris.position.set(
     0,
-    arena1_scale * 0.7 * Math.sin(earth_th),
-    arena1_scale * 0.7 * Math.cos(earth_th));
+    Math.sin(earth_th) * arena1_scale * 0.7,
+    Math.cos(earth_th) * arena1_scale * 0.7);
   scene.add(polaris);
   polaris = polaris.clone();
   polaris.rotation.z = Math.PI/2;
@@ -366,15 +366,15 @@ function init1() {
   // 北回帰線
   trajectory = circle.clone();
   trajectory.scale.set(
-    earth_radius * Math.cos(earth_th), earth_radius * Math.cos(earth_th), 1);
-  trajectory.position.z = earth_radius * Math.sin(earth_th);
+    Math.cos(earth_th) * earth_radius, Math.cos(earth_th) * earth_radius, 1);
+  trajectory.position.z = Math.sin(earth_th) * earth_radius;
   earth.add(trajectory);
 
   // 南回帰線
   trajectory = circle.clone();
   trajectory.scale.set(
-    earth_radius * Math.cos(earth_th), earth_radius * Math.cos(earth_th), 1);
-  trajectory.position.z = -earth_radius * Math.sin(earth_th);
+    Math.cos(earth_th) * earth_radius, Math.cos(earth_th) * earth_radius, 1);
+  trajectory.position.z = Math.sin(earth_th) * earth_radius;
   earth.add(trajectory);
 
   // 黄道
