@@ -1,6 +1,6 @@
 'use strict';
 var debug = false;
-var animate;
+var animate, unloaded_texture;
 
 var scenes = [], renderers = [], cameras = [], controls = [];
 var e1 = new THREE.Vector3(1,0,0),
@@ -348,7 +348,9 @@ function init1() {
   earth = new THREE.Object3D();
   scene.add(earth);
   var texture = THREE.ImageUtils.loadTexture(
-        '/computer/moon/land_ocean_ice_cloud_2048.jpeg'),
+        '/computer/moon/land_ocean_ice_cloud_2048.jpeg',
+        null,
+        function() { unloaded_texture -= 1;}),
       sphere = new THREE.Mesh(
         new THREE.SphereGeometry(earth_radius, 30, 20),
         new THREE.MeshLambertMaterial({ map: texture, overdraw: true }));
@@ -446,9 +448,11 @@ function init2() {
       scene = new THREE.Scene(),
       camera = new THREE.PerspectiveCamera(
         45, arena.innerWidth() / arena.innerHeight(), 1, 2000),
-      renderer = new THREE.WebGLRenderer({ antialias: true }),
-      texture = THREE.ImageUtils.loadTexture(
-        '/computer/moon/moon.jpeg');
+//    texture = THREE.ImageUtils.loadTexture(
+//      '/computer/moon/moon.jpeg',
+//      null,
+//      function() { unloaded_texture -= 1;}),
+      renderer = new THREE.WebGLRenderer({ antialias: true });
 
   arena.css({top: '60px', left: '550px'});
 
@@ -480,7 +484,7 @@ function init2() {
 }
 
 function update() {
-  if ( animate )
+  if ( animate || unloaded_texture > 0)
     requestAnimationFrame(update);
 
   for ( var i = 0; i < 2; ++i ) {
@@ -492,12 +496,12 @@ function update() {
 
 function setHandlers() {
 
-  $('#arena0, #arena1, form').mousedown(function() {
+  $('#arena0, #arena1').mousedown(function() {
     animate = true;
     update();
   });
 
-  $('#arena0, #arena1, form').mouseup(function() {
+  $('#arena0, #arena1').mouseup(function() {
     animate = false;
   });
 
@@ -509,7 +513,7 @@ function setHandlers() {
     update();
   });
 
-  $('#arena0, #arena1, form').on('touchstart', function() {
+  $('#arena0, #arena1').on('touchstart', function() {
     animate = true;
     update();
   });
@@ -517,16 +521,21 @@ function setHandlers() {
   $('#arena0, #arena1, form').on('touchend', function() {
     animate = false;
   });
+
+  $('input').change(function() {
+    update();
+  });
 }
 
 $(function() {
   $('.settings').change(newSettings);
 
-  setHandlers();
-
+  unloaded_texture = 1;
   init0();
   init1();
   init2();
+
+  setHandlers();
 
   animate = false;
   newSettings();
