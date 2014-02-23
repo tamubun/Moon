@@ -102,10 +102,17 @@ function newSettings() {
 
   moon2.position =
     v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20);
-  cameras[2].lookAt(moon2.position);
+/*
+  moon2.quaternion.setFromAxisAngle(e2, 1.4);
+  moon2.rotateOnAxis(e1, moon_angles.th);
+  q.setFromAxisAngle(e2, moon_angles.phi - year_phase);
+  moon2.quaternion.multiplyQuaternions(q, moon2.quaternion);
+  moon2.quaternion.multiplyQuaternions(celestial.quaternion, moon2.quaternion);
+*/
   sun_light2.position
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
     .applyQuaternion(celestial.quaternion);
+  cameras[2].lookAt(moon2.position);
 }
 
 function showLabels0() {
@@ -439,7 +446,9 @@ function init2() {
       scene = new THREE.Scene(),
       camera = new THREE.PerspectiveCamera(
         45, arena.innerWidth() / arena.innerHeight(), 1, 2000),
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true }),
+      texture = THREE.ImageUtils.loadTexture(
+        '/computer/moon/moon.jpeg');
 
   arena.css({top: '60px', left: '550px'});
 
@@ -452,7 +461,9 @@ function init2() {
 
   moon2 = new THREE.Mesh(
     new THREE.SphereGeometry(6, 30, 20),
-    new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    new THREE.MeshLambertMaterial({ color: 'white' })
+//    new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
+  );
   scene.add(moon2);
 
   sun_light2 = new THREE.DirectionalLight(0xffffff,1);
@@ -463,6 +474,7 @@ function init2() {
   scene.fog = new THREE.FogExp2('blue',0.08);
   renderer.setClearColor('blue');
 */
+
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena2').append(renderer.domElement);
 }
