@@ -1,7 +1,7 @@
 'use strict';
 var debug = false;
 var animate, unloaded_texture;
-
+var helper;
 var scenes = [], renderers = [], cameras = [], controls = [];
 var e1 = new THREE.Vector3(1,0,0),
     e2 = new THREE.Vector3(0,1,0),
@@ -9,7 +9,8 @@ var e1 = new THREE.Vector3(1,0,0),
     zero = new THREE.Vector3(0,0,0),
     earth_th = 23.4 / 180.0 * Math.PI,
     earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th)),
-    moon_th = 5.1 / 180.0 * Math.PI;
+    moon_th = 5.1 / 180.0 * Math.PI,   // 黄道に対する月の公転軸の傾き
+    moon_th2 = -1.5 / 180.0 * Math.PI; // 黄道に対する月の自転軸の傾き
 var celestial,      // 天球
     sun_trajectory,
     moon_trajectory,
@@ -98,17 +99,17 @@ function newSettings() {
     Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - year_phase),
     -Math.sin(moon_angles.th),
     Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - year_phase));
-  moon0.position = v.clone().multiplyScalar(cel_radius * 0.95);
+  moon0.position = v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(cel_radius * 0.95);
 
+  /* バグ。
+     これでは、月の北極が天の北極を向いた状態を保って自転する。
+     正しくは、月の北極は、月の公転軸から6.7度傾いた方向を保って自転する */
   moon2.position =
     v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20);
-/*
-  moon2.quaternion.setFromAxisAngle(e2, 1.4);
-  moon2.rotateOnAxis(e1, moon_angles.th);
-  q.setFromAxisAngle(e2, moon_angles.phi - year_phase);
-  moon2.quaternion.multiplyQuaternions(q, moon2.quaternion);
+  moon2.quaternion.setFromAxisAngle(e2, Math.PI/2);
+  moon2.rotateOnAxis(e2, lunar_phase);
   moon2.quaternion.multiplyQuaternions(celestial.quaternion, moon2.quaternion);
-*/
+
   sun_light2.position
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
     .applyQuaternion(celestial.quaternion);
@@ -285,7 +286,7 @@ function init0() {
     new THREE.SphereGeometry(cel_radius*0.07, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'gray' }));
-  celestial.add(moon0);
+  scene.add(moon0);
 
   var ground0 = new THREE.Mesh(
     new THREE.CubeGeometry(600, 600,cel_radius * 1.1),
@@ -447,11 +448,10 @@ function init2() {
   var arena = $('#arena2'),
       scene = new THREE.Scene(),
       camera = new THREE.PerspectiveCamera(
-        45, arena.innerWidth() / arena.innerHeight(), 1, 2000),
-//    texture = THREE.ImageUtils.loadTexture(
-//      '/computer/moon/moon.jpeg',
-//      null,
-//      function() { unloaded_texture -= 1;}),
+        45, arena.innerWidth() / arena.innerHeight(), 1, 100),
+      texture = THREE.ImageUtils.loadTexture(
+        '/computer/moon/moon.jpeg',
+        null, function() { unloaded_texture -= 1;}),
       renderer = new THREE.WebGLRenderer({ antialias: true });
 
   arena.css({top: '60px', left: '550px'});
@@ -465,12 +465,19 @@ function init2() {
 
   moon2 = new THREE.Mesh(
     new THREE.SphereGeometry(6, 30, 20),
-    new THREE.MeshLambertMaterial({ color: 'white' })
-//    new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
+//    new THREE.MeshLambertMaterial({ color: 'white' })
+    /* x: 緯度0,経度0, y: 北極, z: 緯度0,東経270
+       (http://ja.wikipedia.org/wiki/月面座標 */
+    new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
   );
   scene.add(moon2);
+  moon2.add(new THREE.AxisHelper(8));
+  moon0.quaternion = moon2.quaternion;
+  moon0.add(new THREE.AxisHelper(cel_radius*0.15));
+  helper = new THREE.CameraHelper(camera);
+  scenes[0].add(helper);
 
-  sun_light2 = new THREE.DirectionalLight(0xffffff,1);
+  sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
   scene.add(sun_light2);
 /*
   // こんな感じにすれば、日中に太陽の光で月が見えないようにできる
@@ -491,6 +498,7 @@ function update() {
     controls[i].update();
     renderers[i].render(scenes[i], cameras[i]);
   }
+  helper.update();
   renderers[2].render(scenes[2], cameras[2]);
 }
 
@@ -530,7 +538,7 @@ function setHandlers() {
 $(function() {
   $('.settings').change(newSettings);
 
-  unloaded_texture = 1;
+  unloaded_texture = 2;
   init0();
   init1();
   init2();
