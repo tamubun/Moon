@@ -1,5 +1,6 @@
 'use strict';
-var debug = false;
+var debug = false,
+    helper;
 var animate, unloaded_texture;
 var helper;
 var scenes = [], renderers = [], cameras = [], controls = [];
@@ -21,7 +22,6 @@ var ground, earth, moon1,
     earth_radius = arena1_scale / 2.5,
     sun_light1, moons_path;
 var moon2, sun_light2, ambient;
-var mark;
 
 /* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
    赤道上にある地表Pから見た時の
@@ -104,9 +104,6 @@ function newSettings() {
 
   moon2.position =
     v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20);
-//  moon2.quaternion.setFromAxisAngle(e2, Math.PI/2);
-//  moon2.rotateOnAxis(e2, lunar_phase+year_phase);
-//  moon2.quaternion.multiplyQuaternions(celestial.quaternion, moon2.quaternion);
   /* arena0座標で、赤道上からみて月の北極が向いている方向を定める。
      月は、その軸回りを自転する。
      月の北極は、黄道軸と一致していると近似。ほんとは moon_th2傾いてる */
@@ -118,7 +115,6 @@ function newSettings() {
         Math.cos(moon_axis_angles.th) *
 	  Math.cos(moon_axis_angles.phi - year_phase)),
        m = new THREE.Matrix4();
-  mark.position = n.clone().applyQuaternion(celestial.quaternion).multiplyScalar(cel_radius * 0.95);
   m.lookAt(n, zero, e1); // Object3D.lookAt()のソースから
   moon2.quaternion.setFromRotationMatrix(m);
   moon2.rotateOnAxis(e1, Math.PI/2);
@@ -480,21 +476,18 @@ function init2() {
 
   moon2 = new THREE.Mesh(
     new THREE.SphereGeometry(6, 30, 20),
-//    new THREE.MeshLambertMaterial({ color: 'white' })
     /* x: 緯度0,経度0, y: 北極, z: 緯度0,東経270
        (http://ja.wikipedia.org/wiki/月面座標 */
     new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
   );
   scene.add(moon2);
-  moon2.add(new THREE.AxisHelper(8));
   moon0.quaternion = moon2.quaternion;
-  moon0.add(new THREE.AxisHelper(cel_radius*0.15));
-  helper = new THREE.CameraHelper(camera);
-  scenes[0].add(helper);
-  mark = new THREE.Mesh(
-    new THREE.SphereGeometry(3),
-    new THREE.MeshLambertMaterial({ color: 'black' }));
-  scenes[0].add(mark);
+  if ( debug ) {
+    helper = new THREE.CameraHelper(camera);
+    scenes[0].add(helper);
+    moon0.add(new THREE.AxisHelper(cel_radius*0.15));
+    moon2.add(new THREE.AxisHelper(8));
+  }
 
   sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
   scene.add(sun_light2);
@@ -517,7 +510,10 @@ function update() {
     controls[i].update();
     renderers[i].render(scenes[i], cameras[i]);
   }
-  helper.update();
+
+  if ( debug )
+    helper.update();
+
   renderers[2].render(scenes[2], cameras[2]);
 }
 
