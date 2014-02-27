@@ -2,7 +2,6 @@
 var debug = false,
     helper;
 var animate, unloaded_texture;
-var helper;
 var scenes = [], renderers = [], cameras = [], controls = [];
 var e1 = new THREE.Vector3(1,0,0),
     e2 = new THREE.Vector3(0,1,0),
@@ -51,6 +50,8 @@ function newSettings() {
 
   lunar_phase +=
     (+$('#date').val()+($('#time').val()-12)/24.0)/29.5306*2*Math.PI;
+  year_phase +=
+    ($('#time').val()-12)/24.0/365.0*2*Math.PI;
 
   q.setFromAxisAngle(e2, -date_phase);
   celestial.quaternion.setFromAxisAngle(e1, latitude);
