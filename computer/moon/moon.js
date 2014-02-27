@@ -10,7 +10,7 @@ var e1 = new THREE.Vector3(1,0,0),
     earth_th = 23.4 / 180.0 * Math.PI,
     earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th)),
     moon_th = 5.1 / 180.0 * Math.PI,   // 黄道に対する月の公転軸の傾き
-    moon_th2 = -1.5 / 180.0 * Math.PI; // 黄道に対する月の自転軸の傾き
+    moon_th2 = -1.5 / 180.0 * Math.PI; // 黄道に対する月の自転軸の傾き(未使用)
 var celestial,      // 天球
     sun_trajectory,
     moon_trajectory,
@@ -21,6 +21,7 @@ var ground, earth, moon1,
     earth_radius = arena1_scale / 2.5,
     sun_light1, moons_path;
 var moon2, sun_light2, ambient;
+var mark;
 
 /* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
    赤道上にある地表Pから見た時の
@@ -101,13 +102,27 @@ function newSettings() {
     Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - year_phase));
   moon0.position = v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(cel_radius * 0.95);
 
-  /* バグ。
-     これでは、月の北極が天の北極を向いた状態を保って自転する。
-     正しくは、月の北極は、月の公転軸から6.7度傾いた方向を保って自転する */
   moon2.position =
     v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20);
-  moon2.quaternion.setFromAxisAngle(e2, Math.PI/2);
-  moon2.rotateOnAxis(e2, lunar_phase);
+//  moon2.quaternion.setFromAxisAngle(e2, Math.PI/2);
+//  moon2.rotateOnAxis(e2, lunar_phase+year_phase);
+//  moon2.quaternion.multiplyQuaternions(celestial.quaternion, moon2.quaternion);
+  /* arena0座標で、赤道上からみて月の北極が向いている方向を定める。
+     月は、その軸回りを自転する。
+     月の北極は、黄道軸と一致していると近似。ほんとは moon_th2傾いてる */
+  var moon_axis_angles = eclipticToGround(e3),
+      n = new THREE.Vector3( // 月の北極をこちらに向ければいい
+        Math.cos(moon_axis_angles.th) *
+	  Math.sin(moon_axis_angles.phi - year_phase),
+       -Math.sin(moon_axis_angles.th),
+        Math.cos(moon_axis_angles.th) *
+	  Math.cos(moon_axis_angles.phi - year_phase)),
+       m = new THREE.Matrix4();
+  mark.position = n.clone().applyQuaternion(celestial.quaternion).multiplyScalar(cel_radius * 0.95);
+  m.lookAt(n, zero, e1); // Object3D.lookAt()のソースから
+  moon2.quaternion.setFromRotationMatrix(m);
+  moon2.rotateOnAxis(e1, Math.PI/2);
+  moon2.rotateOnAxis(e2, Math.PI + lunar_phase);
   moon2.quaternion.multiplyQuaternions(celestial.quaternion, moon2.quaternion);
 
   sun_light2.position
@@ -476,6 +491,10 @@ function init2() {
   moon0.add(new THREE.AxisHelper(cel_radius*0.15));
   helper = new THREE.CameraHelper(camera);
   scenes[0].add(helper);
+  mark = new THREE.Mesh(
+    new THREE.SphereGeometry(3),
+    new THREE.MeshLambertMaterial({ color: 'black' }));
+  scenes[0].add(mark);
 
   sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
   scene.add(sun_light2);
