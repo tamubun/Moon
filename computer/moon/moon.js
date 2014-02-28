@@ -38,6 +38,33 @@ function eclipticToGround(v) {
   return { th: th, phi: phi };
 }
 
+/* d = 0を春分の日(3/20に固定)として、任意の d に対応する月日を返す */
+var months = [31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 31, 28];
+function calcDate(d) {
+  var m, attr;
+
+  if ( d === 0 || d === 365 )
+    attr = ' (春分)';
+  else if ( d === Math.floor(365/2.0) )
+    attr = ' (秋分)';
+  else if ( d === Math.floor(365/4.0) )
+    attr = ' (夏至)';
+  else if ( d === Math.floor(365/4.0*3.0) )
+    attr = ' (冬至)';
+  else
+    attr = '';
+
+  d += 19;
+  for ( m = 0; m < 12; ++m ) {
+    if ( d < months[m] )
+      break;
+    d -= months[m];
+  }
+  if ( m > 9 )
+    m-=12;
+  return ""+(m+3)+"/"+(d+1) + attr;
+}
+
 function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
       year_phase = $('#date').val()/365.0*2*Math.PI,
@@ -48,6 +75,7 @@ function newSettings() {
       q = new THREE.Quaternion(),
       v = new THREE.Vector3();
 
+  $('#date-label').text('日付: ' + calcDate(+$('#date').val()));
   lunar_phase +=
     (+$('#date').val()+($('#time').val()-12)/24.0)/29.5306*2*Math.PI;
   year_phase +=
