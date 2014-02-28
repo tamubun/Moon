@@ -460,7 +460,7 @@ function init2() {
   var arena = $('#arena2'),
       scene = new THREE.Scene(),
       camera = new THREE.PerspectiveCamera(
-        45, arena.innerWidth() / arena.innerHeight(), 1, 100),
+        45, arena.innerWidth() / arena.innerHeight(), 0.07, 100),
       texture = THREE.ImageUtils.loadTexture(
         '/computer/moon/moon.jpeg',
         null, function() { unloaded_texture -= 1;}),
@@ -498,6 +498,12 @@ function init2() {
   scene.fog = new THREE.FogExp2('blue',0.08);
   renderer.setClearColor('blue');
 */
+
+  var ground2 = new THREE.Mesh(
+    new THREE.CubeGeometry(1000, 1000, 1000),
+    new THREE.MeshLambertMaterial({ color: 'black' }));
+  ground2.position.z = -500.1;
+  scene.add(ground2);
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena2').append(renderer.domElement);
