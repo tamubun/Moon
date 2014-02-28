@@ -20,7 +20,7 @@ var ground, earth, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
     sun_light1, moons_path;
-var moon2, sun_light2, ambient;
+var sun2, moon2, sun_light2, ambient;
 
 /* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
    赤道上にある地表Pから見た時の
@@ -153,6 +153,11 @@ function newSettings() {
   sun_light2.position
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
     .applyQuaternion(celestial.quaternion);
+  sun2.position
+    .set(0, -Math.sin(angles.th), Math.cos(angles.th))
+    .applyQuaternion(celestial.quaternion)
+    .multiplyScalar(40);
+
   cameras[2].lookAt(moon2.position);
 }
 
@@ -488,7 +493,7 @@ function init2() {
   var arena = $('#arena2'),
       scene = new THREE.Scene(),
       camera = new THREE.PerspectiveCamera(
-        45, arena.innerWidth() / arena.innerHeight(), 0.07, 100),
+        0.8, arena.innerWidth() / arena.innerHeight(), 0.07, 100),
       texture = THREE.ImageUtils.loadTexture(
         '/computer/moon/moon.jpeg',
         null, function() { unloaded_texture -= 1;}),
@@ -503,8 +508,9 @@ function init2() {
   camera.position.set(0,0,0);
   camera.up = e3.clone();
 
+  // 日蝕用に本当の視直径0.52度に合わせる
   moon2 = new THREE.Mesh(
-    new THREE.SphereGeometry(6, 30, 20),
+    new THREE.SphereGeometry(0.09, 30, 20),
     /* x: 緯度0,経度0, y: 北極, z: 緯度0,東経270
        (http://ja.wikipedia.org/wiki/月面座標 */
     new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
@@ -532,6 +538,12 @@ function init2() {
     new THREE.MeshLambertMaterial({ color: 'black' }));
   ground2.position.z = -500.1;
   scene.add(ground2);
+
+  sun2 = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 30, 20),
+    new THREE.MeshLambertMaterial(
+      { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
+  scene.add(sun2);
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena2').append(renderer.domElement);
