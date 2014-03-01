@@ -20,7 +20,7 @@ var ground, earth, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
     sun_light1, moons_path;
-var sun2, moon2, sun_light2, ambient;
+var sun2, earth2, moon2, sun_light2, ambient;
 
 /* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
    赤道上にある地表Pから見た時の
@@ -153,6 +153,7 @@ function newSettings() {
   sun_light2.position
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
     .applyQuaternion(celestial.quaternion);
+
   sun2.position
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
     .applyQuaternion(celestial.quaternion)
@@ -515,6 +516,7 @@ function init2() {
        (http://ja.wikipedia.org/wiki/月面座標 */
     new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
   );
+  moon2.receiveShadow = true;
   scene.add(moon2);
   moon0.quaternion = moon2.quaternion;
   if ( debug ) {
@@ -525,6 +527,16 @@ function init2() {
   }
 
   sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
+  sun_light2.castShadow = true;
+  sun_light2.shadowMapWidth = 512;
+  sun_light2.shadowMapHeight = 512;
+  sun_light2.shadowCameraNear = 0.07;
+  sun_light2.shadowCameraFar = 100;
+  sun_light2.shadowCameraLeft = -0.5;
+  sun_light2.shadowCameraRight = 0.5;
+  sun_light2.shadowCameraBottom = -0.5;
+  sun_light2.shadowCameraTop = 0.5;
+  sun_light2.shadowDarkness = 0.7;
   scene.add(sun_light2);
 /*
   // こんな感じにすれば、日中に太陽の光で月が見えないようにできる
@@ -538,6 +550,11 @@ function init2() {
     new THREE.MeshLambertMaterial({ color: 'black' }));
   ground2.position.z = -500.1;
   scene.add(ground2);
+  earth2 = new THREE.Mesh(
+    new THREE.SphereGeometry(0.33, 30, 20),
+    new THREE.MeshLambertMaterial({ color: 'white' }));
+  earth2.castShadow = true;
+  scene.add(earth2);
 
   sun2 = new THREE.Mesh(
     new THREE.SphereGeometry(0.18, 30, 20),
@@ -545,6 +562,7 @@ function init2() {
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   scene.add(sun2);
 
+  renderer.shadowMapEnabled = true;
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena2').append(renderer.domElement);
 }
