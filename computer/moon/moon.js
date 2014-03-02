@@ -145,10 +145,10 @@ function newSettings() {
 	  Math.cos(moon_axis_angles.phi - year_phase)),
        m = new THREE.Matrix4();
   m.lookAt(n, zero, e1); // Object3D.lookAt()のソースから
-  moon2.quaternion.setFromRotationMatrix(m);
-  moon2.rotateOnAxis(e1, Math.PI/2);
-  moon2.rotateOnAxis(e2, Math.PI + lunar_phase);
-  moon2.quaternion.multiplyQuaternions(celestial.quaternion, moon2.quaternion);
+  moon0.quaternion.setFromRotationMatrix(m);
+  moon0.rotateOnAxis(e1, Math.PI/2);
+  moon0.rotateOnAxis(e2, Math.PI + lunar_phase);
+  moon0.quaternion.multiplyQuaternions(celestial.quaternion, moon2.quaternion);
 
   sun_light2.position
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
@@ -334,6 +334,10 @@ function init0() {
       { ambient: 0xbbbbbb, color: 'gray' }));
   scene.add(moon0);
 
+  if ( debug ) {
+    moon0.add(new THREE.AxisHelper(cel_radius*0.11));
+  }
+
   var ground0 = new THREE.Mesh(
     new THREE.CubeGeometry(600, 600,cel_radius * 1.1),
     new THREE.MeshLambertMaterial(
@@ -430,7 +434,7 @@ function init1() {
   trajectory = circle.clone();
   trajectory.scale.set(
     Math.cos(earth_th) * earth_radius, Math.cos(earth_th) * earth_radius, 1);
-  trajectory.position.z = Math.sin(earth_th) * earth_radius;
+  trajectory.position.z = -Math.sin(earth_th) * earth_radius;
   earth.add(trajectory);
 
   // 黄道
@@ -517,13 +521,12 @@ function init2() {
     new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
   );
   moon2.receiveShadow = true;
+  moon2.quaternion = moon0.quaternion;
   scene.add(moon2);
-  moon0.quaternion = moon2.quaternion;
   if ( debug ) {
     helper = new THREE.CameraHelper(camera);
     scenes[0].add(helper);
-    moon0.add(new THREE.AxisHelper(cel_radius*0.15));
-    moon2.add(new THREE.AxisHelper(8));
+    moon2.add(new THREE.AxisHelper(0.11));
   }
 
   sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
@@ -545,11 +548,14 @@ function init2() {
   renderer.setClearColor('blue');
 */
 
-  var ground2 = new THREE.Mesh(
-    new THREE.CubeGeometry(1000, 1000, 1000),
-    new THREE.MeshLambertMaterial({ color: 'black' }));
-  ground2.position.z = -500.1;
-  scene.add(ground2);
+  if ( !debug ) {
+    var ground2 = new THREE.Mesh(
+      new THREE.PlaneGeometry(1000, 1000),
+      new THREE.MeshLambertMaterial({ color: 'black' }));
+    ground2.position.z = -0.07;
+    scene.add(ground2);
+  }
+
   earth2 = new THREE.Mesh(
     new THREE.SphereGeometry(0.33, 30, 20),
     new THREE.MeshLambertMaterial({ color: 'white' }));
