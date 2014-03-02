@@ -71,7 +71,7 @@ function newSettings() {
       date_phase = $('#time').val()/24.0*2*Math.PI - Math.PI,
       lunar_phase = $('#lunar-phase').val()/360*2*Math.PI,
       node_phase =  $('#node').val()/180*Math.PI,
-      angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase)),
+      angles,
       q = new THREE.Quaternion(),
       v = new THREE.Vector3();
 
@@ -80,6 +80,7 @@ function newSettings() {
     (+$('#date').val()+($('#time').val()-12)/24.0)/29.5306*2*Math.PI;
   year_phase +=
     ($('#time').val()-12)/24.0/365.0*2*Math.PI;
+  angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
 
   q.setFromAxisAngle(e2, -date_phase);
   celestial.quaternion.setFromAxisAngle(e1, latitude);
@@ -112,7 +113,6 @@ function newSettings() {
     psi = Math.atan(Math.tan(d) / Math.cos(moon_th));
   if ( d > Math.PI/2 && d <= Math.PI * 3.0/2.0 )
     psi = Math.PI + psi;
-  console.log(psi/Math.PI*180);
   q.setFromAxisAngle(e3, psi);
   q.multiplyQuaternions(moons_path.quaternion, q);
   moon_vec = e1.clone().applyQuaternion(q);
@@ -121,16 +121,15 @@ function newSettings() {
     1.4 * arena1_scale * moon_vec.y,
     1.4 * arena1_scale * moon_vec.z);
   var moon_angles = eclipticToGround(moon_vec);
-  console.log(moon_angles);
   moon_trajectory.scale.set(
     Math.cos(moon_angles.th) * cel_radius * 0.95,
     1,
     Math.cos(moon_angles.th) * cel_radius * 0.95);
   moon_trajectory.position.y = -Math.sin(moon_angles.th) * cel_radius * 0.95;
   v.set(
-    Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - year_phase),
+    Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - angles.phi),
     -Math.sin(moon_angles.th),
-    Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - year_phase));
+    Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - angles.phi));
   moon0.position = v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(cel_radius * 0.95);
 
   moon2.position =
