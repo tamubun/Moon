@@ -112,6 +112,7 @@ function newSettings() {
     psi = Math.atan(Math.tan(d) / Math.cos(moon_th));
   if ( d > Math.PI/2 && d <= Math.PI * 3.0/2.0 )
     psi = Math.PI + psi;
+  console.log(psi/Math.PI*180);
   q.setFromAxisAngle(e3, psi);
   q.multiplyQuaternions(moons_path.quaternion, q);
   moon_vec = e1.clone().applyQuaternion(q);
@@ -120,6 +121,7 @@ function newSettings() {
     1.4 * arena1_scale * moon_vec.y,
     1.4 * arena1_scale * moon_vec.z);
   var moon_angles = eclipticToGround(moon_vec);
+  console.log(moon_angles);
   moon_trajectory.scale.set(
     Math.cos(moon_angles.th) * cel_radius * 0.95,
     1,
@@ -465,8 +467,7 @@ function init1() {
     new THREE.SphereGeometry(arena1_scale*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
-  sun1.position = sun_light1.position;
-  scene.add(sun1);
+  sun_light1.add(sun1);
 
   // 白道
   moons_path = new THREE.Object3D();
@@ -497,7 +498,6 @@ function init1() {
   moon1 = new THREE.Mesh(
     new THREE.SphereGeometry(arena1_scale*0.07, 30, 20),
     new THREE.MeshLambertMaterial({ color: 'gray' }));
-  moon1.position.x = arena1_scale * 1.4;
   scene.add(moon1);
 
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
