@@ -556,6 +556,16 @@ function init2() {
   scene.add(new THREE.AmbientLight('blue'));
   scene.fog = new THREE.FogExp2('blue',0.08);
   renderer.setClearColor('blue');
+
+  // こんな感じのやり方で opacityを調節しても出来そう。夕方にも勝手になる。
+  // 但し、このままだと、地平線の辺りに隙間が残る
+  sky2 = new THREE.Mesh(
+    new THREE.PlaneGeometry(1000, 1000),
+    new THREE.MeshLambertMaterial({
+      color: 'red', emissive: 'blue', transparent: true, opacity: 0.7 }));
+  sky2.position.z = 0.1;
+  sky2.rotation.x = Math.PI;
+  scene.add(sky2);
 */
 
   if ( !debug ) {
