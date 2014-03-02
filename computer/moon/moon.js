@@ -476,11 +476,22 @@ function init1() {
     arena1_scale * 1.4, arena1_scale * 1.4, 1);
   moons_path.add(trajectory);
 
-  // 昇交点
+  // 昇交点、降交点
   var node = new THREE.Mesh(
     new THREE.SphereGeometry(3),
-    new THREE.MeshLambertMaterial({ color: 'black' }));
+    new THREE.MeshLambertMaterial({ color: 'red' }));
   node.position.x = arena1_scale * 1.4;
+  moons_path.add(node);
+  node = node.clone();
+  node.position.x = arena1_scale * 1.8;
+  moons_path.add(node);
+  node = new THREE.Mesh(
+    new THREE.SphereGeometry(3),
+    new THREE.MeshLambertMaterial({ color: 'black' }));
+  node.position.x = -arena1_scale * 1.4;
+  moons_path.add(node);
+  node = node.clone();
+  node.position.x = -arena1_scale * 1.8;
   moons_path.add(node);
 
   moon1 = new THREE.Mesh(
