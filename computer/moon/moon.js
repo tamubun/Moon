@@ -326,30 +326,39 @@ function init0() {
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
   celestial.add(sun0);
 
+  var sun_light0 = new THREE.DirectionalLight(0xffffff);
+  sun_light0.target = scene;
+  sun0.add(sun_light0);
+
   moon0 = new THREE.Mesh(
     new THREE.SphereGeometry(cel_radius*0.07, 30, 20),
     new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 'gray' }));
+      { ambient: 0xbbbbbb, color: 'white' }));
   scene.add(moon0);
 
   if ( debug ) {
     moon0.add(new THREE.AxisHelper(cel_radius*0.11));
   }
 
-  var ground0 = new THREE.Mesh(
-    new THREE.CubeGeometry(600, 600,cel_radius * 1.1),
-    new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
+  var brown = new THREE.MeshLambertMaterial(
+        { color: 0xaa7733, transparent: true, opacity: 0.8 }),
+      black = new THREE.MeshLambertMaterial(
+        { ambient: 0xbbbbbb, color: 0, transparent: true, opacity: 0.8 }),
+      ground_material = new THREE.MeshFaceMaterial(
+        [black, black, black, black, brown, black]),
+      ground0 = new THREE.Mesh(
+        new THREE.CubeGeometry(600, 600,cel_radius * 1.1), ground_material);
   ground0.position.z = -cel_radius*1.1/2;
   showLabels0();
   scene.add(ground0);
 
+/*
   var light = new THREE.DirectionalLight(0xffffff);
   light.position.set(0,0,50);
   light.target = ground0;
   scene.add(light);
-  scene.add(new THREE.AmbientLight(0x404040));
-
+*/
+  scene.add(new THREE.AmbientLight(0x222));
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena0').append(renderer.domElement);
 }
@@ -452,7 +461,7 @@ function init1() {
   sun_light1 = new THREE.DirectionalLight(0xffffff, 1.2);
   sun_light1.target = earth1;
   scene.add(sun_light1);
-  scene.add(new THREE.AmbientLight(0x101010));
+//  scene.add(new THREE.AmbientLight(0x101010));
 
   var sun1 = new THREE.Mesh(
     new THREE.SphereGeometry(arena1_scale*0.1, 30, 20),
