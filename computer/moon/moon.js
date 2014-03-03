@@ -471,7 +471,7 @@ function init1() {
   // 昇交点、降交点
   var node = new THREE.Mesh(
     new THREE.SphereGeometry(3),
-    new THREE.MeshLambertMaterial({ color: 'red' }));
+    new THREE.MeshLambertMaterial({ color: 0, emissive: 'red' }));
   node.position.x = arena1_scale * 1.4;
   moons_path.add(node);
   node = node.clone();
@@ -562,8 +562,8 @@ function init2() {
 
   if ( !debug ) {
     var ground2 = new THREE.Mesh(
-      new THREE.PlaneGeometry(1000, 1000),
-      new THREE.MeshLambertMaterial({ color: 'black' }));
+      new THREE.PlaneGeometry(19,19),
+      new THREE.MeshLambertMaterial({ color: 0, emissive: 0x6b4513 }));
     ground2.position.z = -0.07;
     scene.add(ground2);
   }
