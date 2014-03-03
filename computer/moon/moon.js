@@ -14,9 +14,9 @@ var e1 = new THREE.Vector3(1,0,0),
 var celestial,      // 天球
     sun_trajectory,
     moon_trajectory,
-    sun, moon0,
+    sun0, moon0,
     cel_radius = 200;
-var ground, earth, moon1,
+var ground1, earth1, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
     sun_light1, moons_path;
@@ -88,14 +88,14 @@ function newSettings() {
   sun_trajectory.scale.set(
     Math.cos(angles.th) * cel_radius, 1, Math.cos(angles.th) * cel_radius);
   sun_trajectory.position.y = -Math.sin(angles.th) * cel_radius;
-  sun.position.set(
+  sun0.position.set(
     0, -Math.sin(angles.th) * cel_radius, Math.cos(angles.th) * cel_radius);
 
-  ground.position.set(
+  ground1.position.set(
     Math.cos(latitude) * earth_radius, 0, Math.sin(latitude) * earth_radius);
-  ground.rotation.set(0, Math.PI/2-latitude, 0);
-  earth.quaternion.setFromAxisAngle(e3, angles.phi + date_phase);
-  earth.rotation.x = -earth_th;
+  ground1.rotation.set(0, Math.PI/2-latitude, 0);
+  earth1.quaternion.setFromAxisAngle(e3, angles.phi + date_phase);
+  earth1.rotation.x = -earth_th;
   sun_light1.position.set(
     Math.cos(year_phase) * arena1_scale * 1.8,
     Math.sin(year_phase) * arena1_scale * 1.8,
@@ -277,14 +277,11 @@ function init0() {
       { color: 'blue', transparent: true, opacity: 0.1 }));
   scene.add(celestial);
 
-  var polaris = new THREE.Mesh(        // 天の北極
-    new THREE.TetrahedronGeometry(8),
-    new THREE.MeshLambertMaterial({ color: 'yellow'}));
-  polaris.position.y = cel_radius*1.5;
-  celestial.add(polaris);
-  polaris = polaris.clone();
-  polaris.rotation.z = Math.PI/2;
-  celestial.add(polaris);
+  var polaris0 = new THREE.Mesh(        // 天の北極
+    new THREE.OctahedronGeometry(5),
+    new THREE.MeshLambertMaterial({ color: 'gold', emissive: 0x333 }));
+  polaris0.position.y = cel_radius*1.5;
+  celestial.add(polaris0);
 
   var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
       geo = new THREE.Geometry(),
@@ -323,11 +320,11 @@ function init0() {
     geo, new THREE.LineBasicMaterial({ color: 'white', linewidth: 2}));
   celestial.add(moon_trajectory);
 
-  sun = new THREE.Mesh(
+  sun0 = new THREE.Mesh(
     new THREE.SphereGeometry(cel_radius*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
-  celestial.add(sun);
+  celestial.add(sun0);
 
   moon0 = new THREE.Mesh(
     new THREE.SphereGeometry(cel_radius*0.07, 30, 20),
@@ -344,9 +341,8 @@ function init0() {
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
   ground0.position.z = -cel_radius*1.1/2;
-  scene.add(ground0);
-
   showLabels0();
+  scene.add(ground0);
 
   var light = new THREE.DirectionalLight(0xffffff);
   light.position.set(0,0,50);
@@ -385,20 +381,16 @@ function init1() {
   control.dynamicDampingFactor = 0.3;
   control.enabled = true;
 
-  var polaris = new THREE.Mesh(        // 天の北極
-    new THREE.TetrahedronGeometry(8),
-    new THREE.MeshLambertMaterial({ color: 'yellow'}));
-  polaris.position.set(
+  var polaris1 = new THREE.Mesh(        // 天の北極
+    new THREE.OctahedronGeometry(5),
+    new THREE.MeshLambertMaterial({ color: 'gold', emissive: 0x333 }));
+  polaris1.position.set(
     0,
-    Math.sin(earth_th) * arena1_scale * 0.7,
-    Math.cos(earth_th) * arena1_scale * 0.7);
-  scene.add(polaris);
-  polaris = polaris.clone();
-  polaris.rotation.z = Math.PI/2;
-  scene.add(polaris);
+    Math.sin(earth_th) * arena1_scale * 0.9,
+    Math.cos(earth_th) * arena1_scale * 0.9);
+  scene.add(polaris1);
 
-  earth = new THREE.Object3D();
-  scene.add(earth);
+  earth1 = new THREE.Object3D();
   var texture = THREE.ImageUtils.loadTexture(
         '/computer/moon/land_ocean_ice_cloud_2048.jpeg',
         null,
@@ -407,7 +399,8 @@ function init1() {
         new THREE.SphereGeometry(earth_radius, 30, 20),
         new THREE.MeshLambertMaterial({ map: texture, overdraw: true }));
   sphere.rotation.set(Math.PI/2, Math.PI/0.8, 0);
-  earth.add(sphere);
+  earth1.add(sphere);
+  scene.add(earth1);
 
   var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
       geo = new THREE.Geometry(),
@@ -422,21 +415,21 @@ function init1() {
   // 赤道
   trajectory = circle.clone();
   trajectory.scale.set(earth_radius, earth_radius, 1);
-  earth.add(trajectory);
+  earth1.add(trajectory);
 
   // 北回帰線
   trajectory = circle.clone();
   trajectory.scale.set(
     Math.cos(earth_th) * earth_radius, Math.cos(earth_th) * earth_radius, 1);
   trajectory.position.z = Math.sin(earth_th) * earth_radius;
-  earth.add(trajectory);
+  earth1.add(trajectory);
 
   // 南回帰線
   trajectory = circle.clone();
   trajectory.scale.set(
     Math.cos(earth_th) * earth_radius, Math.cos(earth_th) * earth_radius, 1);
   trajectory.position.z = -Math.sin(earth_th) * earth_radius;
-  earth.add(trajectory);
+  earth1.add(trajectory);
 
   // 黄道
   trajectory = circle.clone();
@@ -444,7 +437,7 @@ function init1() {
     arena1_scale * 1.8, arena1_scale * 1.8, 1);
   scene.add(trajectory);
 
-  ground = new THREE.Mesh(
+  ground1 = new THREE.Mesh(
     new THREE.PlaneGeometry(arena1_scale*0.8, arena1_scale*0.8),
     new THREE.MeshLambertMaterial(
       { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
@@ -452,13 +445,12 @@ function init1() {
     new THREE.PlaneGeometry(arena1_scale*0.8, arena1_scale*0.8),
     new THREE.MeshLambertMaterial({ color: 'black' }));
   ground_back.rotation.x = Math.PI;
-  ground.add(ground_back);
-  earth.add(ground);
-
-  showLabels1(ground);
+  ground1.add(ground_back);
+  showLabels1(ground1);
+  earth1.add(ground1);
 
   sun_light1 = new THREE.DirectionalLight(0xffffff, 1.2);
-  sun_light1.target = earth;
+  sun_light1.target = earth1;
   scene.add(sun_light1);
   scene.add(new THREE.AmbientLight(0x101010));
 
