@@ -35,16 +35,16 @@
     <div id='arena2' style=''></div>
     <form>
       <div data-role="fieldcontain" style="padding-top: 30px;">
-	<label for='latitude'>緯度:</label>
-	<input name='latitude' id='latitude' class='settings' min='-90' max='90' value='35' type='range'>
+	<label for='time'>時刻:</label>
+	<input name='time' id='time' class='settings' min='0' max='30' value='12' step=0.1 type='range'>
       </div>
       <div data-role="fieldcontain">
 	<label for='date' id='date-label'></label>
 	<input name='date' id='date' class='settings' min='0' max='365' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
-	<label for='time'>時刻:</label>
-	<input name='time' id='time' class='settings' min='0' max='30' value='12' step=0.1 type='range'>
+	<label for='latitude'>緯度:</label>
+	<input name='latitude' id='latitude' class='settings' min='-90' max='90' value='35' type='range'>
       </div>
       <div data-role="fieldcontain">
 	<label for='lunar-phase'>月の位置:</label>
@@ -55,9 +55,66 @@
 	<input name='node' id='node' class='settings' min='0' max='360' value='0' type='range'>
       </div>
     </form>
+
     <div data-role="collapsible" data-theme="c" data-content-theme="d">
       <h4>説明</h4>
-      説明
+      <p>月の満ち欠けの少し複雑な仕組みを理解するために作ったプログラムです。おまけで日蝕と月蝕の条件も確かめる事ができます。下側二つの図は、マウスの各ボタンでドラッグする事により、向きや遠近を変えたりする事ができます。</p>
+
+      <p>夕方に西に沈む三日月や半月が、なぜ、日本(少なくとも本州ぐらいの緯度)では、右下か真下が光る物しか見られず左下が光ることが無いか、という私の長年の疑問が自分の中で晴れた記念に作ってみました。</p>
+
+      <p>月の満ち欠けの基本的な原理は、前野さんの動くテキストシリーズ<a href="http://irobutsu.a.la9.jp/movingtext/tendou/index.html">太陽と月・惑星の動き</a>などで確かめてみて下さい。これを理解した上で、「新月のときは、いつも日蝕にならないのか」、「満月のときは、いつも月蝕にならないのか」、「三日月の光っている部分が、日によって右を向いたり下を向いたりするのはなぜか」、といった疑問の答を、本プログラムを使いながら考えてみて下さい。</p>
+
+      <div data-role="collapsible">
+	<h5>時刻</h5>
+	指定した日付の0時から30時(翌日の朝6時)まで指定します。単純化のために、1日はきっちり24時間、太陽の南中時刻は毎日きっちり12時であるとしています。
+      </div>
+      <div data-role="collapsible">
+	<h5>日付</h5>
+	春分の日を0として、その日から一年間を指定します。単純化のために、1年はきっちり365日、地球は完全な円軌道で太陽を等速で回るとしています。
+      </div>
+      <div data-role="collapsible">
+	<h5>緯度</h5>
+	北緯をプラス、南緯をマイナスとして指定します。北極では、四方全部が南になりますが、本プログラムはサボってるので、東西南北が存在します。南極も同様です。<br />
+	経度の方は、あまり重要ではないので日本の経度辺りに固定しています。
+      </div>
+      <div data-role="collapsible">
+	<h5>月の位置</h5>
+	春分の日の12時に、太陽の位置に対して、月がどこにいるかを角度で指定します。0度は春分の正午に新月になっていることを意味し、180度なら春分の正午に満月(月は地球の裏側)になっていることを意味します。単純化のために、月は地球の回りを完全な円軌道で等速で回るとしています。
+      </div>
+      <div data-role="collapsible">
+	<h5>昇交点の位置</h5>
+	地球を止めて天動説で考えたとき、月が地球を回る軌道(白道)は、太陽が地球を回る軌道(黄道)に対して、平均5.1度の傾きを保ったまま、約18.6年の周期で傾きの方向を変えています(歳差運動)。昇交点の位置によって、この白道の軸がどちらを向いて傾いているかを指定します。<br />
+昇交点、又は、昇交点の反対側(降交点)の近くに太陽と月とが来た時に限って、日蝕や月蝕が起こります。<br />
+昇交点は18.6年で地球の回りを一周するので、一年では約20度回ります。本来は、指定する日付を進めると昇交点も動かすべきなのですが、そうすると何となく分かりにくくなってしまうので、敢えて動かないようにしてあります。
+      </div>
+      <div data-role="collapsible">
+	<h5>単純化している点</h5>
+	<p>本プログラムでは、以下のような点を単純化して現実の世界を正しく反映していません。
+	<nl>
+	  <li>地球に大気がない</li>
+	  <li>一年は丁度365日</li>
+	  <li>一日は丁度24時間</li>
+	  <li>太陽は正午に南中する</li>
+	  <li>地球、月は完全な球体</li>
+	  <li>地球、月の軌道は完全な円軌道</li>
+	  <li>月の自転軸は、地球の公転軸と一致(実際は約1.5度傾いている)</li>
+	  <li>月は地球から十分離れた所にある(実際は、地球の半径の約60倍ぐらい先)。但し、太陽はもっと遠くにある</li>
+	  <li>地軸の歳差運動(約2.6万年周期)</li>
+	</nl>
+	</p>
+	<p>これらを単純化しているために、以下のような現象は本プログラムでは見ることができません。
+	<nl>
+	  <li>新月以外の月は、真昼でも昇ってさえいれば見える。もちろん、朝焼けも夕焼けもない</li>
+	  <li>均時差(太陽の南中時刻が日によって変ったりする現象)</li>
+	  <li>アナレンマ(毎日同じ時刻に太陽を定点観測すると8の字が浮き上がる現象。本プログラムでは直線になる)</li>
+	  <li>春分、夏至、秋分、冬至の日付の変動</li>
+	  <li>緯度の違いによる日蝕、月蝕の見え方の違い</li>
+	  <li>金環食</li>
+	  <li>月の見かけの大きさの変化</li>
+	  <li>月の秤動(月はいつも地球に同じ面を向けているが、日や場所によって少し裏側が見える)。月軌道の傾きも要因になっているので、それなりに見られるが、楕円軌道や地球の緯度の違いに由来する秤動は起きない</li>
+	</nl>
+	</p>
+      </div>
     </div>
     <div data-role='footer'>
       <a href="http://club.pep.ne.jp/~tamubun/" data-icon="home" rel="external">ホーム</a>
