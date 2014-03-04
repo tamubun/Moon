@@ -107,12 +107,13 @@ function newSettings() {
       psi,      // 昇交点からの月の軌道上での回転角
       moon_vec; // 月の方向 (arena1での座標系)
   d = d - 2*Math.PI * Math.floor(d/2.0/Math.PI);
-  if ( Math.abs(Math.cos(d)) < 0.001 )
-    psi = Math.PI / 2;
-  else
+  if ( Math.abs(Math.cos(d)) < 0.001 ) {
+    psi = Math.sin(d) > 0 ? Math.PI / 2 : Math.PI * 1.5;
+  } else {
     psi = Math.atan(Math.tan(d) / Math.cos(moon_th));
-  if ( d > Math.PI/2 && d <= Math.PI * 3.0/2.0 )
-    psi = Math.PI + psi;
+    if ( d > Math.PI/2 && d <= Math.PI * 1.5 )
+      psi = Math.PI + psi;
+  }
   q.setFromAxisAngle(e3, psi);
   q.multiplyQuaternions(moons_path.quaternion, q);
   moon_vec = e1.clone().applyQuaternion(q);
