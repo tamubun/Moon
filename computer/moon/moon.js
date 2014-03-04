@@ -280,7 +280,7 @@ function init0() {
 
   var polaris0 = new THREE.Mesh(        // 天の北極
     new THREE.OctahedronGeometry(5),
-    new THREE.MeshLambertMaterial({ color: 'gold', emissive: 0x333 }));
+    new THREE.MeshLambertMaterial({ color: 'gold', emissive: 0x999933 }));
   polaris0.position.y = cel_radius*1.5;
   celestial.add(polaris0);
 
@@ -393,7 +393,7 @@ function init1() {
 
   var polaris1 = new THREE.Mesh(        // 天の北極
     new THREE.OctahedronGeometry(5),
-    new THREE.MeshLambertMaterial({ color: 'gold', emissive: 0x333 }));
+    new THREE.MeshLambertMaterial({ color: 'gold', emissive: 0x999933 }));
   polaris1.position.set(
     0,
     Math.sin(earth_th) * arena1_scale * 0.9,
