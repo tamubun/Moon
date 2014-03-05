@@ -524,8 +524,6 @@ function init2() {
         null, function() { unloaded_texture -= 1;}),
       renderer = new THREE.WebGLRenderer({ antialias: true });
 
-  arena.css({top: '60px', left: '550px'});
-
   scenes.push(scene);
   renderers.push(renderer);
   cameras.push(camera);

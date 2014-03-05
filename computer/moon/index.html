@@ -13,26 +13,60 @@
 <script src='moon.js'></script>
 <style>
 #arena0, #arena1 {
-  width: 600px;
-  height: 550px;
   float:left;
 }
+
 #arena2 {
-  width: 200px;
-  height: 200px;
+  top: 60px;
   position: absolute;
-  border: solid 1px;
   background-color: black;
 }
+
+@media screen and (min-width: 480px){
+  #arena0, #arena1 {
+    width: 230px;
+    height: 250px;
+  }
+  #arena2 {
+    width: 80px;
+    height: 80px;
+    left: 210px;
+  }
+}
+
+@media screen and (min-width: 767px){
+  #arena0, #arena1 {
+    width: 380px;
+    height: 400px;
+  }
+  #arena2 {
+    width: 150px;
+    height: 150px;
+    left: 370px;
+  }
+}
+
+@media screen and (min-width: 1200px){
+  #arena0, #arena1 {
+    width: 600px;
+    height: 550px;
+  }
+  #arena2 {
+    width: 200px;
+    height: 200px;
+    left: 580px;
+  }
+}
+
 </style>
 </head>
 <body>
-<div data-role='page'>
+<div data-role='page' id='container'>
   <div data-role='header'><h1>月の満ち欠けと緯度</h1></div>
   <div data-role='content'>
     <div id='arena0'></div>
     <div id='arena1'></div>
-    <div id='arena2' style=''></div>
+    <div id='arena2'></div>
     <form>
       <div data-role="fieldcontain" style="padding-top: 30px;">
 	<label for='time'>時刻:</label>
