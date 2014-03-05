@@ -14,6 +14,7 @@ var e1 = new THREE.Vector3(1,0,0),
 var celestial,      // 天球
     sun_trajectory,
     moon_trajectory,
+    ecliptic,
     sun0, moon0,
     cel_radius = 200;
 var ground1, earth1, moon1,
@@ -90,6 +91,7 @@ function newSettings() {
   sun_trajectory.position.y = -Math.sin(angles.th) * cel_radius;
   sun0.position.set(
     0, -Math.sin(angles.th) * cel_radius, Math.cos(angles.th) * cel_radius);
+  ecliptic.rotation.set(0,-angles.phi, earth_th);
 
   ground1.position.set(
     Math.cos(latitude) * earth_radius, 0, Math.sin(latitude) * earth_radius);
@@ -312,6 +314,12 @@ function init0() {
     Math.cos(earth_th) * cel_radius, 1, Math.cos(earth_th) * cel_radius);
   trajectory.position.y = -Math.sin(earth_th) * cel_radius;
   celestial.add(trajectory);
+
+  // 黄道
+  ecliptic =  new THREE.Line(
+    geo, new THREE.LineBasicMaterial({ color: 'yellow' }));
+  ecliptic.scale.set(cel_radius, 1, cel_radius);
+  celestial.add(ecliptic);
 
   // 指定した日の太陽の軌跡と月の軌跡
   sun_trajectory = new THREE.Line(
