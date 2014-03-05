@@ -410,7 +410,7 @@ function init1() {
 
   earth1 = new THREE.Object3D();
   var texture = THREE.ImageUtils.loadTexture(
-        '/computer/moon/land_ocean_ice_cloud_2048.jpeg',
+        'land_ocean_ice_cloud_2048.jpeg',
         null,
         function() { unloaded_texture -= 1;}),
       sphere = new THREE.Mesh(
@@ -520,7 +520,7 @@ function init2() {
       camera = new THREE.PerspectiveCamera(
         0.8, arena.innerWidth() / arena.innerHeight(), 0.07, 100),
       texture = THREE.ImageUtils.loadTexture(
-        '/computer/moon/moon.jpeg',
+        'moon.jpeg',
         null, function() { unloaded_texture -= 1;}),
       renderer = new THREE.WebGLRenderer({ antialias: true });
 
