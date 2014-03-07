@@ -649,7 +649,31 @@ function setHandlers() {
   });
 }
 
+function adjustStyle() {
+  var w01 = $('#arena0').width(), h01 = w01*0.8, wh2 = w01*0.3;
+  $('#arena0, #arena1').height(h01);
+  $('#arena2').css({width: wh2, height: wh2, left: -w01*0.1});
+
+  if ( renderers.length > 0 ) {
+    renderers[0].setSize(w01, h01);
+    cameras[0].aspect = w01/h01;
+    cameras[0].updateProjectionMatrix();
+    renderers[1].setSize(w01, h01);
+    cameras[1].aspect = w01/h01;
+    cameras[1].updateProjectionMatrix();
+    renderers[2].setSize(wh2, wh2);
+    update();
+  }
+}
+
+function onWindowResize() {
+  adjustStyle();
+}
+
 $(function() {
+  adjustStyle();
+
+  $(window).resize(onWindowResize);
   $('.settings').change(newSettings);
 
   unloaded_texture = 2;
