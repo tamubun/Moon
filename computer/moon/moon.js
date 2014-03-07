@@ -13,7 +13,6 @@ var e1 = new THREE.Vector3(1,0,0),
     moon_th2 = -1.5 / 180.0 * Math.PI; // 黄道に対する月の自転軸の傾き(未使用)
 var celestial,      // 天球
     sun_trajectory,
-    moon_trajectory,
     ecliptic,
     sun0, moon0,
     cel_radius = 200;
@@ -46,11 +45,11 @@ function calcDate(d) {
 
   if ( d === 0 || d === 365 )
     attr = ' (春分)';
-  else if ( d === Math.floor(365/2.0) )
+  else if ( d === Math.floor(0.5+365/2.0) )
     attr = ' (秋分)';
-  else if ( d === Math.floor(365/4.0) )
+  else if ( d === Math.floor(0.5+365/4.0) )
     attr = ' (夏至)';
-  else if ( d === Math.floor(365/4.0*3.0) )
+  else if ( d === Math.floor(0.5+365/4.0*3.0) )
     attr = ' (冬至)';
   else
     attr = '';
@@ -124,11 +123,6 @@ function newSettings() {
     1.4 * arena1_scale * moon_vec.y,
     1.4 * arena1_scale * moon_vec.z);
   var moon_angles = eclipticToGround(moon_vec);
-  moon_trajectory.scale.set(
-    Math.cos(moon_angles.th) * cel_radius * 0.95,
-    1,
-    Math.cos(moon_angles.th) * cel_radius * 0.95);
-  moon_trajectory.position.y = -Math.sin(moon_angles.th) * cel_radius * 0.95;
   v.set(
     Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - angles.phi),
     -Math.sin(moon_angles.th),
@@ -325,9 +319,6 @@ function init0() {
   sun_trajectory = new THREE.Line(
     geo, new THREE.LineBasicMaterial({ color: 0xff7777, linewidth: 3}));
   celestial.add(sun_trajectory);
-  moon_trajectory = new THREE.Line(
-    geo, new THREE.LineBasicMaterial({ color: 'white', linewidth: 2}));
-  celestial.add(moon_trajectory);
 
   sun0 = new THREE.Mesh(
     new THREE.SphereGeometry(cel_radius*0.1, 30, 20),
