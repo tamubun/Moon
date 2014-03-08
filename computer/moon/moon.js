@@ -277,7 +277,7 @@ function init0() {
   var polaris0 = new THREE.Mesh(        // 天の北極
     new THREE.OctahedronGeometry(5),
     new THREE.MeshLambertMaterial({ color: 'gold', emissive: 0x999933 }));
-  polaris0.position.y = cel_radius*1.5;
+  polaris0.position.y = cel_radius;
   celestial.add(polaris0);
 
   var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
