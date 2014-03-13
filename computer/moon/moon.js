@@ -242,6 +242,13 @@ function showLabels1(plane) {
   plane.add(text);
 }
 
+function initValues() {
+  $(location.hash.substring(1).split('&')).each(function(i,s) {
+    var keyval = s.split('='), key = keyval[0], val = +keyval[1];
+    $('#' + key).val(val).slider('refresh');
+  });
+}
+
 /* arena0 の初期設定 */
 function init0() {
   var arena = $('#arena0'),
@@ -663,9 +670,11 @@ function onWindowResize() {
 
 $(function() {
   adjustStyle();
+  initValues();
 
   $(window).resize(onWindowResize);
   $('.settings').change(newSettings);
+  onpopstate = initValues;
 
   unloaded_texture = 2;
   init0();
