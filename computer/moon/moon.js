@@ -410,7 +410,11 @@ function init1() {
   var texture = THREE.ImageUtils.loadTexture(
         'land_ocean_ice_cloud_2048.jpeg',
         null,
-        function() { unloaded_texture -= 1;}),
+        function() {
+          unloaded_texture -= 1;
+          if ( unloaded_texture < 1 )
+            $('#loading').hide();
+        }),
       sphere = new THREE.Mesh(
         new THREE.SphereGeometry(earth_radius, 30, 20),
         new THREE.MeshLambertMaterial({ map: texture, overdraw: true }));
@@ -519,7 +523,11 @@ function init2() {
         0.8, arena.innerWidth() / arena.innerHeight(), 0.07, 100),
       texture = THREE.ImageUtils.loadTexture(
         'moon.jpeg',
-        null, function() { unloaded_texture -= 1;}),
+        null, function() {
+          unloaded_texture -= 1;
+          if ( unloaded_texture < 1 )
+            $('#loading').hide();
+        }),
       renderer = new THREE.WebGLRenderer({ antialias: true });
 
   scenes.push(scene);
@@ -650,7 +658,7 @@ function setHandlers() {
 function adjustStyle() {
   var w01 = $('#arena0').width(), h01 = w01*0.8, wh2 = w01*0.3;
   $('#arena0, #arena1').height(h01);
-  $('#arena2').css({width: wh2, height: wh2, left: -w01*0.1});
+  $('#arena2, #loading').css({width: wh2, height: wh2, left: -w01*0.1});
 
   if ( renderers.length > 0 ) {
     renderers[0].setSize(w01, h01);
