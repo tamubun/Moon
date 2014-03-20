@@ -13,13 +13,14 @@ var e1 = new THREE.Vector3(1,0,0),
     moon_th2 = -1.5 / 180.0 * Math.PI; // 黄道に対する月の自転軸の傾き(未使用)
 var celestial,      // 天球
     sun_trajectory,
-    ecliptic,
+    ecliptic0,
+    moons_path0,
     sun0, moon0,
     cel_radius = 200;
 var ground1, earth1, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
-    sun_light1, moons_path;
+    sun_light1, moons_path1;
 var sun2, earth2, moon2, sun_light2, ambient;
 
 /* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
@@ -90,7 +91,8 @@ function newSettings() {
   sun_trajectory.position.y = -Math.sin(angles.th) * cel_radius;
   sun0.position.set(
     0, -Math.sin(angles.th) * cel_radius, Math.cos(angles.th) * cel_radius);
-  ecliptic.rotation.set(0,-angles.phi, earth_th);
+  ecliptic0.rotation.set(0,-angles.phi, earth_th);
+  moons_path0.rotation.set(0, -node_phase, moon_th);
 
   ground1.position.set(
     Math.cos(latitude) * earth_radius, 0, Math.sin(latitude) * earth_radius);
@@ -103,7 +105,7 @@ function newSettings() {
     0);
 
   q.setFromAxisAngle(e1, moon_th);
-  moons_path.quaternion.setFromAxisAngle(e3, -node_phase).multiply(q);
+  moons_path1.quaternion.setFromAxisAngle(e3, -node_phase).multiply(q);
   var d = lunar_phase + node_phase + year_phase, // 昇交点と月との黄経差
       psi,      // 昇交点からの月の軌道上での回転角
       moon_vec; // 月の方向 (arena1での座標系)
@@ -116,7 +118,7 @@ function newSettings() {
       psi = Math.PI + psi;
   }
   q.setFromAxisAngle(e3, psi);
-  q.multiplyQuaternions(moons_path.quaternion, q);
+  q.multiplyQuaternions(moons_path1.quaternion, q);
   moon_vec = e1.clone().applyQuaternion(q);
   moon1.position.set(
     1.4 * arena1_scale * moon_vec.x,
@@ -158,6 +160,13 @@ function newSettings() {
     .multiplyScalar(40);
 
   cameras[2].lookAt(moon2.position);
+}
+
+function onoff() {
+  ecliptic0.visible = $('#sun-line').prop('checked');
+  update();
+  moons_path0.visible = $('#moon-line').prop('checked');
+  update();
 }
 
 function showLabels0() {
@@ -288,6 +297,7 @@ function init0() {
     th = 2*Math.PI / 40 * i;
     geo.vertices.push(new THREE.Vector3(Math.cos(th), 0, Math.sin(th)));
   }
+  geo.computeLineDistances();
   var circle = new THREE.Line(geo, material);
 
   // 春分、秋分
@@ -310,10 +320,16 @@ function init0() {
   celestial.add(trajectory);
 
   // 黄道
-  ecliptic =  new THREE.Line(
+  ecliptic0 =  new THREE.Line(
     geo, new THREE.LineBasicMaterial({ color: 'yellow' }));
-  ecliptic.scale.set(cel_radius, 1, cel_radius);
-  celestial.add(ecliptic);
+  ecliptic0.scale.set(cel_radius, cel_radius, cel_radius);
+  celestial.add(ecliptic0);
+
+  // 白道
+  moons_path0 =  new THREE.Line(
+    geo, new THREE.LineDashedMaterial({ color: 'lightgray', dashSize: 0.05, gapSize: 0.05 }));
+  moons_path0.scale.set(0.95, 0.95, 0.95);
+  ecliptic0.add(moons_path0);
 
   // 指定した日の太陽の軌跡と月の軌跡
   sun_trajectory = new THREE.Line(
@@ -470,30 +486,30 @@ function init1() {
   sun_light1.add(sun1);
 
   // 白道
-  moons_path = new THREE.Object3D();
-  scene.add(moons_path);
+  moons_path1 = new THREE.Object3D();
+  scene.add(moons_path1);
   trajectory = circle.clone();
   trajectory.scale.set(
     arena1_scale * 1.4, arena1_scale * 1.4, 1);
-  moons_path.add(trajectory);
+  moons_path1.add(trajectory);
 
   // 昇交点、降交点
   var node = new THREE.Mesh(
     new THREE.SphereGeometry(3),
     new THREE.MeshLambertMaterial({ color: 0, emissive: 'red' }));
   node.position.x = arena1_scale * 1.4;
-  moons_path.add(node);
+  moons_path1.add(node);
   node = node.clone();
   node.position.x = arena1_scale * 1.8;
-  moons_path.add(node);
+  moons_path1.add(node);
   node = new THREE.Mesh(
     new THREE.SphereGeometry(3),
     new THREE.MeshLambertMaterial({ color: 'black' }));
   node.position.x = -arena1_scale * 1.4;
-  moons_path.add(node);
+  moons_path1.add(node);
   node = node.clone();
   node.position.x = -arena1_scale * 1.8;
-  moons_path.add(node);
+  moons_path1.add(node);
 
   moon1 = new THREE.Mesh(
     new THREE.SphereGeometry(arena1_scale*0.07, 30, 20),
@@ -666,6 +682,7 @@ $(function() {
 
   $(window).resize(onWindowResize);
   $('.settings').change(newSettings);
+  $('#onoff input').change(onoff);
 
   unloaded_texture = 2;
   init0();
@@ -676,5 +693,6 @@ $(function() {
 
   animate = false;
   newSettings();
+  onoff();
   update();
 });

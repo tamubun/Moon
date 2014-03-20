@@ -22,6 +22,13 @@
   position: absolute;
   background-color: black;
 }
+
+#onoff {
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  position: absolute;
+}
 </style>
 </head>
 <body>
@@ -29,7 +36,18 @@
   <div data-role='header'><h1>月の満ち欠けと緯度</h1></div>
   <div data-role='content'>
     <div class='ui-grid-a'>
-      <div id='arena0' class='ui-block-a'></div>
+      <div id='arena0' class='ui-block-a'>
+	<form id='onoff'>
+	  <div data-role="fieldcontain">
+	    <fieldset data-role="controlgroup" data-type="horizontal">
+	      <input type="checkbox" name="sun-line" id="sun-line" data-mini="true" checked="true" />
+	      <label for="sun-line">黄道</label>
+	      <input type="checkbox" name="moon-line" id="moon-line" data-mini="true" />
+	      <label for="moon-line">白道</label>
+	    </fieldset>
+	  </div>
+	</form>
+      </div>
       <div id='arena1' class='ui-block-b'>
 	<div id='arena2'></div>
       </div>
