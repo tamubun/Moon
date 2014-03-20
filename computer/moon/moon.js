@@ -93,6 +93,8 @@ function newSettings() {
     0, -Math.sin(angles.th) * cel_radius, Math.cos(angles.th) * cel_radius);
   ecliptic0.rotation.set(0,-angles.phi, earth_th);
   moons_path0.rotation.set(0, -node_phase, moon_th);
+  ecliptic0.visible = $('#sun-line').prop('checked');
+  moons_path0.visible = $('#moon-line').prop('checked');
 
   ground1.position.set(
     Math.cos(latitude) * earth_radius, 0, Math.sin(latitude) * earth_radius);
@@ -160,13 +162,6 @@ function newSettings() {
     .multiplyScalar(40);
 
   cameras[2].lookAt(moon2.position);
-}
-
-function onoff() {
-  ecliptic0.visible = $('#sun-line').prop('checked');
-  update();
-  moons_path0.visible = $('#moon-line').prop('checked');
-  update();
 }
 
 function showLabels0() {
@@ -254,7 +249,11 @@ function showLabels1(plane) {
 function initValues() {
   $(location.hash.substring(1).split('&')).each(function(i,s) {
     var keyval = s.split('='), key = keyval[0], val = +keyval[1];
-    $('#' + key).val(val).slider('refresh');
+    if ( key === 'sun-line' || key === 'moon-line' ) {
+      $('#' + key).prop('checked', val===1).checkboxradio('refresh');
+    } else {
+      $('#' + key).val(val).slider('refresh');
+    }
   });
 }
 
@@ -698,9 +697,8 @@ $(function() {
 
   $(window).resize(onWindowResize);
   $('.settings').change(newSettings);
-  $('#onoff input').change(onoff);
 
-  onpopstate = initValues;
+  onpopstate = function() { initValues(); newSettings(); update(); }
 
   unloaded_texture = 2;
   init0();
@@ -711,6 +709,5 @@ $(function() {
 
   animate = false;
   newSettings();
-  onoff();
   update();
 });
