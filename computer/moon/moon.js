@@ -698,7 +698,7 @@ $(function() {
   $(window).resize(onWindowResize);
   $('.settings').change(newSettings);
 
-  onpopstate = function() { initValues(); newSettings(); update(); }
+  window.onpopstate = function() { initValues(); newSettings(); update(); }
 
   unloaded_texture = 2;
   init0();
