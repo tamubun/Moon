@@ -131,10 +131,9 @@ function newSettings() {
     Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - angles.phi),
     -Math.sin(moon_angles.th),
     Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - angles.phi));
-  moon0.position = v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(cel_radius * 0.95);
+  moon0.position.copy(v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(cel_radius * 0.95));
 
-  moon2.position =
-    v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20);
+  moon2.position.copy(v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20));
   /* arena0座標で、赤道上からみて月の北極が向いている方向を定める。
      月は、その軸回りを自転する。
      月の北極は、黄道軸と一致していると近似。ほんとは moon_th2傾いてる */
@@ -150,7 +149,8 @@ function newSettings() {
   moon0.quaternion.setFromRotationMatrix(m);
   moon0.rotateOnAxis(e1, Math.PI/2);
   moon0.rotateOnAxis(e2, Math.PI + lunar_phase);
-  moon0.quaternion.multiplyQuaternions(celestial.quaternion, moon2.quaternion);
+  moon0.quaternion.multiplyQuaternions(celestial.quaternion, moon0.quaternion);
+  moon2.quaternion.copy(moon0.quaternion);
 
   sun_light2.position
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
@@ -261,7 +261,7 @@ function initValues() {
 function init0() {
   var arena = $('#arena0'),
       scene = new THREE.Scene(),
-      renderer = new THREE.WebGLRenderer({ antialias: true }),
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }),
       camera = new THREE.PerspectiveCamera(
         45, arena.innerWidth() / arena.innerHeight(), 1, 2000),
       control = new THREE.TrackballControls(camera, arena[0]);
@@ -389,7 +389,7 @@ function init0() {
 function init1() {
   var arena = $('#arena1'),
       scene = new THREE.Scene(),
-      renderer = new THREE.WebGLRenderer({ antialias: true }),
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }),
       camera = new THREE.PerspectiveCamera(
         45, arena.innerWidth() / arena.innerHeight(), 1, 2000),
       control = new THREE.TrackballControls(camera, arena[0]);
@@ -543,7 +543,7 @@ function init2() {
           if ( unloaded_texture < 1 )
             $('#loading').hide();
         }),
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 
   scenes.push(scene);
   renderers.push(renderer);
@@ -560,7 +560,7 @@ function init2() {
     new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
   );
   moon2.receiveShadow = true;
-  moon2.quaternion = moon0.quaternion;
+//  moon2.quaternion = moon0.quaternion;
   scene.add(moon2);
   if ( debug ) {
     helper = new THREE.CameraHelper(camera);
