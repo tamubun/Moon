@@ -672,8 +672,15 @@ function setHandlers() {
 
 function adjustStyle() {
   var w01 = $('#arena0').width(), h01 = w01*0.8, wh2 = w01*0.3;
-  $('#arena0, #arena1').height(h01);
-  $('#arena2, #loading').css({width: wh2, height: wh2, left: -w01*0.1});
+  var h02 = document.body.clientHeight*0.5, w02 = h02/0.8, wh2_2 = w02*0.3;
+  if ( h01 < h02 ) {
+    $('#arena0, #arena1').height(h01);
+    $('#arena2, #loading').css({width: wh2, height: wh2, left: -w01*0.1});
+  } else {
+    $('#arena0, #arena1').height(h02);
+    $('#arena0, #arena1').width(w02);
+    $('#arena2, #loading').css({width: wh2_2, height: wh2_2, left: -w02*0.1});
+  }
 
   if ( renderers.length > 0 ) {
     renderers[0].setSize(w01, h01);
