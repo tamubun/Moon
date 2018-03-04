@@ -9,7 +9,7 @@ var e1 = new THREE.Vector3(1,0,0),
     zero = new THREE.Vector3(0,0,0),
     earth_th = 23.4 / 180.0 * Math.PI,
     earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th)),
-    moon_th = 0.471 / 180.0 * Math.PI,   // 黄道に対するイオの公転軸の傾き
+    moon_th = 0.471 / 180.0 * Math.PI,   // 黄道に対するエウロパの公転軸の傾き
     moon_th2 = -1.5 / 180.0 * Math.PI; // 黄道に対する月の自転軸の傾き(未使用)
 var celestial,      // 天球
     sun_trajectory,
@@ -552,7 +552,7 @@ function init2() {
   camera.position.set(0,0,0);
   camera.up = e3.clone();
 
-  // 日蝕用に本当のイオの視直径に合わせる
+  // 日蝕用に本当のエウロパの視直径に合わせる
   moon2 = new THREE.Mesh(
     new THREE.SphereGeometry(0.047, 30, 20),
     /* x: 緯度0,経度0, y: 北極, z: 緯度0,東経270
