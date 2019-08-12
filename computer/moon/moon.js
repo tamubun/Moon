@@ -1,4 +1,8 @@
 'use strict';
+import * as THREE from '../../js/three/build/three.module.js';
+import { TrackballControls } from
+  '../../js/three/examples/jsm/controls/TrackballControls.js';
+
 var debug = false,
     helper;
 var animate, unloaded_texture;
@@ -164,14 +168,14 @@ function newSettings() {
   cameras[2].lookAt(moon2.position);
 }
 
-function showLabels0() {
+function showLabels0(font) {
   var material = new THREE.MeshBasicMaterial({color: 'black'}),
-      text, zenith,
+      text,
       scene = scenes[0];
 
   text = new THREE.Mesh(
     new THREE.TextGeometry(
-      'N', {size:30, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+      'N', {size:30, height:0.2, curveSegments: 2, font: font}),
     material);
   text.position.set(0, cel_radius+40, 0.1);
   text.rotation.set(Math.PI, Math.PI, 0);
@@ -179,7 +183,7 @@ function showLabels0() {
 
   text = new THREE.Mesh(
     new THREE.TextGeometry(
-      'S', {size:30, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+      'S', {size:30, height:0.2, curveSegments: 2, font: font}),
     material);
   text.position.set(0, -cel_radius-15, 0.1);
   text.rotation.set(Math.PI, Math.PI, 0);
@@ -187,7 +191,7 @@ function showLabels0() {
 
   text = new THREE.Mesh(
     new THREE.TextGeometry(
-      'E', {size:30, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+      'E', {size:30, height:0.2, curveSegments: 2, font: font}),
     material);
   text.position.set(cel_radius+30, 0, 0.1);
   text.rotation.set(Math.PI, Math.PI, 0);
@@ -195,27 +199,20 @@ function showLabels0() {
 
   text = new THREE.Mesh(
     new THREE.TextGeometry(
-      'W', {size:30, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+      'W', {size:30, height:0.2, curveSegments: 2, font: font}),
     material);
   text.position.set(-cel_radius-30, 0, 0.1);
   text.rotation.set(Math.PI, Math.PI, 0);
   scene.add(text);
-
-  zenith = new THREE.Mesh(
-    new THREE.SphereGeometry(2),
-    material);
-  zenith.position.set(0, 0, cel_radius);
-  scene.add(zenith);
 }
 
-function showLabels1(plane) {
+function showLabels1(plane, font) {
   var material = new THREE.MeshBasicMaterial({color: 'black'}),
-      text,
-      scene = scenes[1];
+      text;
 
   text = new THREE.Mesh(
     new THREE.TextGeometry(
-      'N', {size:15, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+      'N', {size:15, height:0.2, curveSegments: 2, font: font}),
     material);
   text.position.set(-arena1_scale*0.28, 0, 0.1);
   text.rotation.z = Math.PI/2;
@@ -223,7 +220,7 @@ function showLabels1(plane) {
 
   text = new THREE.Mesh(
     new THREE.TextGeometry(
-      'S', {size:15, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+      'S', {size:15, height:0.2, curveSegments: 2, font: font}),
     material);
   text.position.set(arena1_scale*0.35, 0, 0.1);
   text.rotation.z = Math.PI/2;
@@ -231,7 +228,7 @@ function showLabels1(plane) {
 
   text = new THREE.Mesh(
     new THREE.TextGeometry(
-      'E', {size:15, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+      'E', {size:15, height:0.2, curveSegments: 2, font: font}),
     material);
   text.position.set(0, arena1_scale*0.3, 0.1);
   text.rotation.z = Math.PI/2;
@@ -239,11 +236,21 @@ function showLabels1(plane) {
 
   text = new THREE.Mesh(
     new THREE.TextGeometry(
-      'W', {size:15, height:0.2, curveSegments: 2, font: 'helvetiker'}),
+      'W', {size:15, height:0.2, curveSegments: 2, font: font}),
     material);
   text.position.set(0, -arena1_scale*0.37, 0.1);
   text.rotation.z = Math.PI/2;
   plane.add(text);
+}
+
+function showLabels() {
+  var loader = new THREE.FontLoader();
+  loader.load(
+	'../../js/three/examples/fonts/helvetiker_regular.typeface.json',
+	function(font) {
+	  showLabels0(font);
+	  showLabels1(ground1, font);
+	});
 }
 
 function initValues() {
@@ -264,7 +271,7 @@ function init0() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }),
       camera = new THREE.PerspectiveCamera(
         45, arena.innerWidth() / arena.innerHeight(), 1, 2000),
-      control = new THREE.TrackballControls(camera, arena[0]);
+      control = new TrackballControls(camera, arena[0]);
 
   scenes.push(scene);
   renderers.push(renderer);
@@ -303,8 +310,8 @@ function init0() {
     th = 2*Math.PI / 40 * i;
     geo.vertices.push(new THREE.Vector3(Math.cos(th), 0, Math.sin(th)));
   }
-  geo.computeLineDistances();
   var circle = new THREE.Line(geo, material);
+  circle.computeLineDistances();
 
   // 春分、秋分
   trajectory = circle.clone();
@@ -336,6 +343,13 @@ function init0() {
     geo, new THREE.LineDashedMaterial({ color: 'lightgray', dashSize: 0.05, gapSize: 0.05 }));
   moons_path0.scale.set(0.95, 0.95, 0.95);
   ecliptic0.add(moons_path0);
+
+  // 天頂
+  var  zenith = new THREE.Mesh(
+    new THREE.SphereGeometry(2),
+    new THREE.MeshBasicMaterial({color: 'black'}));
+  zenith.position.set(0, 0, cel_radius);
+  scene.add(zenith);
 
   // 指定した日の太陽の軌跡と月の軌跡
   sun_trajectory = new THREE.Line(
@@ -371,7 +385,6 @@ function init0() {
       ground0 = new THREE.Mesh(
         new THREE.CubeGeometry(600, 600,cel_radius * 1.1), ground_material);
   ground0.position.z = -cel_radius*1.1/2;
-  showLabels0();
   scene.add(ground0);
 
 /*
@@ -392,7 +405,7 @@ function init1() {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }),
       camera = new THREE.PerspectiveCamera(
         45, arena.innerWidth() / arena.innerHeight(), 1, 2000),
-      control = new THREE.TrackballControls(camera, arena[0]);
+      control = new TrackballControls(camera, arena[0]);
 
   scenes.push(scene);
   renderers.push(renderer);
@@ -481,7 +494,6 @@ function init1() {
     new THREE.MeshLambertMaterial({ color: 'black' }));
   ground_back.rotation.x = Math.PI;
   ground1.add(ground_back);
-  showLabels1(ground1);
   earth1.add(ground1);
 
   sun_light1 = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -711,6 +723,7 @@ $(function() {
   init0();
   init1();
   init2();
+  showLabels();
 
   setHandlers();
 
