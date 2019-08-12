@@ -96,7 +96,11 @@ function newSettings() {
   sun0.position.set(
     0, -Math.sin(angles.th) * cel_radius, Math.cos(angles.th) * cel_radius);
   ecliptic0.rotation.set(0,-angles.phi, earth_th);
-  moons_path0.rotation.set(0, -node_phase, moon_th);
+  /* 白道はローカル座標系で、黄道に重ねるように赤道を回し、そのあと5.1度傾ける。
+     と言うことは、グローバル座標系では、掛け算の順を逆にする */
+  q.setFromEuler(new THREE.Euler(0, -node_phase, moon_th));
+  moons_path0.rotation.set(0,-angles.phi, earth_th);
+  moons_path0.quaternion.multiply(q);
   ecliptic0.visible = $('#sun-line').prop('checked');
   moons_path0.visible = $('#moon-line').prop('checked');
 
@@ -335,14 +339,14 @@ function init0() {
   // 黄道
   ecliptic0 =  new THREE.Line(
     geo, new THREE.LineBasicMaterial({ color: 'yellow' }));
-  ecliptic0.scale.set(cel_radius, cel_radius, cel_radius);
+  ecliptic0.scale.set(cel_radius, 1, cel_radius);
   celestial.add(ecliptic0);
 
   // 白道
   moons_path0 =  new THREE.Line(
     geo, new THREE.LineDashedMaterial({ color: 'lightgray', dashSize: 0.05, gapSize: 0.05 }));
-  moons_path0.scale.set(0.95, 0.95, 0.95);
-  ecliptic0.add(moons_path0);
+  moons_path0.scale.set(0.95 * cel_radius, 1, 0.95 * cel_radius);
+  celestial.add(moons_path0);
 
   // 天頂
   var  zenith = new THREE.Mesh(
