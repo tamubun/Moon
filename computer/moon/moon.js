@@ -25,10 +25,10 @@ var ground1, earth1, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
     sun_light1, moons_path1;
-var sun2, earth2, moon2, sun_light2, ambient;
+var sun2, earth2, moon2, sun_light2;
 
-/* 黄道座標系(arena1の座標系)から見た成分vで表されるベクトルの方向にある星を
-   赤道上にある地表Pから見た時の
+/* 黄道座標系(arena1の座標系: x方向=春分点 y方向=夏至点 z方向 りゅう座の頭)
+   から見た成分vで表されるベクトルの方向にある星を赤道上にある地表Pから見た時の
      th: 南中時の天頂角(南が正)
      phi: Pが春分点を向いている時に天の北極回りの回転角(天頂方向が0、東が正)
    で表現する。正午からphiに相当する時間だけ巻き戻せば、その星がPで南中する */
@@ -359,7 +359,7 @@ function init0() {
   sun0 = new THREE.Mesh(
     new THREE.SphereGeometry(cel_radius*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
+      { color: 'yellow', emissive: 0xffff40 }));
   celestial.add(sun0);
 
   var sun_light0 = new THREE.DirectionalLight(0xffffff);
@@ -369,7 +369,7 @@ function init0() {
   moon0 = new THREE.Mesh(
     new THREE.SphereGeometry(cel_radius*0.07, 30, 20),
     new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 'white' }));
+      { color: 'white' }));
   scene.add(moon0);
 
   if ( debug ) {
@@ -379,9 +379,8 @@ function init0() {
   var brown = new THREE.MeshLambertMaterial(
         { color: 0xaa7733, transparent: true, opacity: 0.8 }),
       black = new THREE.MeshLambertMaterial(
-        { ambient: 0xbbbbbb, color: 0, transparent: true, opacity: 0.8 }),
-      ground_material = new THREE.MeshFaceMaterial(
-        [black, black, black, black, brown, black]),
+        { color: 0, transparent: true, opacity: 0.8 }),
+      ground_material = [black, black, black, black, brown, black],
       ground0 = new THREE.Mesh(
         new THREE.CubeGeometry(600, 600,cel_radius * 1.1), ground_material);
   ground0.position.z = -cel_radius*1.1/2;
@@ -435,9 +434,8 @@ function init1() {
   scene.add(polaris1);
 
   earth1 = new THREE.Object3D();
-  var texture = THREE.ImageUtils.loadTexture(
+  var texture = (new THREE.TextureLoader).load(
         'land_ocean_ice_cloud_2048.jpeg',
-        null,
         function() {
           unloaded_texture -= 1;
           if ( unloaded_texture < 1 )
@@ -445,7 +443,7 @@ function init1() {
         }),
       sphere = new THREE.Mesh(
         new THREE.SphereGeometry(earth_radius, 30, 20),
-        new THREE.MeshLambertMaterial({ map: texture, overdraw: true }));
+        new THREE.MeshLambertMaterial({ map: texture }));
   sphere.rotation.set(Math.PI/2, Math.PI/0.8, 0);
   earth1.add(sphere);
   scene.add(earth1);
@@ -488,7 +486,7 @@ function init1() {
   ground1 = new THREE.Mesh(
     new THREE.PlaneGeometry(arena1_scale*0.8, arena1_scale*0.8),
     new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 0xaa7744, transparent: true, opacity: 0.9 }));
+      { color: 0xaa7744, transparent: true, opacity: 0.9 }));
   var ground_back = new THREE.Mesh(
     new THREE.PlaneGeometry(arena1_scale*0.8, arena1_scale*0.8),
     new THREE.MeshLambertMaterial({ color: 'black' }));
@@ -504,7 +502,7 @@ function init1() {
   var sun1 = new THREE.Mesh(
     new THREE.SphereGeometry(arena1_scale*0.1, 30, 20),
     new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
+      { color: 'yellow', emissive: 0xffff40 }));
   sun_light1.add(sun1);
 
   // 白道
@@ -548,9 +546,9 @@ function init2() {
       scene = new THREE.Scene(),
       camera = new THREE.PerspectiveCamera(
         0.8, arena.innerWidth() / arena.innerHeight(), 0.07, 100),
-      texture = THREE.ImageUtils.loadTexture(
+      texture = (new THREE.TextureLoader).load(
         'moon.jpeg',
-        null, function() {
+        function() {
           unloaded_texture -= 1;
           if ( unloaded_texture < 1 )
             $('#loading').hide();
@@ -569,7 +567,7 @@ function init2() {
     new THREE.SphereGeometry(0.09, 30, 20),
     /* x: 緯度0,経度0, y: 北極, z: 緯度0,東経270
        (http://ja.wikipedia.org/wiki/月面座標 */
-    new THREE.MeshLambertMaterial({ map: texture, overdraw: true })
+    new THREE.MeshLambertMaterial({ map: texture })
   );
   moon2.receiveShadow = true;
 //  moon2.quaternion = moon0.quaternion;
@@ -582,15 +580,14 @@ function init2() {
 
   sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
   sun_light2.castShadow = true;
-  sun_light2.shadowMapWidth = 512;
-  sun_light2.shadowMapHeight = 512;
-  sun_light2.shadowCameraNear = 0.07;
-  sun_light2.shadowCameraFar = 100;
-  sun_light2.shadowCameraLeft = -0.5;
-  sun_light2.shadowCameraRight = 0.5;
-  sun_light2.shadowCameraBottom = -0.5;
-  sun_light2.shadowCameraTop = 0.5;
-  sun_light2.shadowDarkness = 0.7;
+  sun_light2.shadow.mapSize.Width = 512;
+  sun_light2.shadow.mapSize.height = 512;
+  sun_light2.shadow.camera.near = 0.07;
+  sun_light2.shadow.camera.far = 100;
+  sun_light2.shadow.camera.left = -0.5;
+  sun_light2.shadow.camera.right = 0.5;
+  sun_light2.shadow.camera.bottom = -0.5;
+  sun_light2.shadow.camera.top = 0.5;
   scene.add(sun_light2);
 /*
   // こんな感じにすれば、日中に太陽の光で月が見えないようにできる
@@ -626,10 +623,10 @@ function init2() {
   sun2 = new THREE.Mesh(
     new THREE.SphereGeometry(0.18, 30, 20),
     new THREE.MeshLambertMaterial(
-      { ambient: 0xbbbbbb, color: 'yellow', emissive: 0xffff40 }));
+      { color: 'yellow', emissive: 0xffff40 }));
   scene.add(sun2);
 
-  renderer.shadowMapEnabled = true;
+  renderer.shadowMap.enabled = true;
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena2').append(renderer.domElement);
 }
