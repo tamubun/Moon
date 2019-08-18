@@ -2,6 +2,8 @@
 import * as THREE from '../../js/three/build/three.module.js';
 import { TrackballControls } from
   '../../js/three/examples/jsm/controls/TrackballControls.js';
+import { Sky } from '../../js/three/examples/jsm/objects/Sky.js';
+import { GUI } from '../../js/three/examples/jsm/libs/dat.gui.module.js';
 
 var debug = false,
     helper;
@@ -550,6 +552,8 @@ function init2() {
       scene = new THREE.Scene(),
       camera = new THREE.PerspectiveCamera(
         0.8, arena.innerWidth() / arena.innerHeight(), 0.07, 100),
+      sky = new Sky(),
+      sunSphere,
       texture = (new THREE.TextureLoader).load(
         'moon.jpeg',
         function() {
@@ -565,6 +569,55 @@ function init2() {
 
   camera.position.set(0,0,0);
   camera.up = e3.clone();
+
+    sky.scale.setScalar(450000);
+    scene.add(sky);  
+    sunSphere = new THREE.Mesh(
+	new THREE.SphereBufferGeometry( 20000, 16, 8 ),
+	new THREE.MeshBasicMaterial( { color: 0xffffff } )
+    );
+    sunSphere.position.y = -700000;
+    sunSphere.visible = false;
+    scene.add(sunSphere);
+
+    var effectController = {
+	turbidity: 10,
+	rayleigh: 2,
+	mieCoefficient: 0.005,
+	mieDirectionalG: 0.8,
+	luminance: 1,
+	inclination: 0.49, // elevation / inclination
+	azimuth: 0.25, // Facing front,
+	sun: ! true
+    };
+    var distance = 400;
+
+    function guiChanged() {
+	var uniforms = sky.material.uniforms;
+	uniforms[ "turbidity" ].value = effectController.turbidity;
+	uniforms[ "rayleigh" ].value = effectController.rayleigh;
+	uniforms[ "luminance" ].value = effectController.luminance;
+	uniforms[ "mieCoefficient" ].value = effectController.mieCoefficient;
+	uniforms[ "mieDirectionalG" ].value = effectController.mieDirectionalG;
+	var theta = Math.PI * ( effectController.inclination - 0.5 );
+	var phi = 2 * Math.PI * ( effectController.azimuth - 0.5 );
+	sunSphere.position.x = distance * Math.cos( phi );
+	sunSphere.position.y = distance * Math.sin( phi ) * Math.sin( theta );
+	sunSphere.position.z = distance * Math.sin( phi ) * Math.cos( theta );
+	uniforms[ "sunPosition" ].value.copy(sunSphere.position);
+//	if ( sun2 !== undefined )
+//	    uniforms[ "sunPosition" ].value.copy(sun2.position);
+    }
+    var gui = new GUI();
+    gui.add( effectController, "turbidity", 1.0, 20.0, 0.1 ).onChange( guiChanged );
+    gui.add( effectController, "rayleigh", 0.0, 4, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( guiChanged );
+    gui.add( effectController, "luminance", 0.0, 2 ).onChange( guiChanged );
+    gui.add( effectController, "inclination", 0, 1, 0.0001 ).onChange( guiChanged );
+    gui.add( effectController, "azimuth", 0, 1, 0.0001 ).onChange( guiChanged );
+    gui.add( effectController, "sun" ).onChange( guiChanged );
+    guiChanged();
 
   // 日蝕用に本当の視直径0.52度に合わせる
   moon2 = new THREE.Mesh(
