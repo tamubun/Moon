@@ -27,7 +27,7 @@ var ground1, earth1, moon1,
     arena1_scale = 200,
     earth_radius = arena1_scale / 2.5,
     sun_light1, moons_path1;
-var sun2, earth2, moon2, sun_light2;
+var sun2, earth2, moon2, sun_light2, ground2;
 
 var effectController = {
   turbidity: 10,
@@ -35,8 +35,6 @@ var effectController = {
   mieCoefficient: 0.005,
   mieDirectionalG: 0.8,
   luminance: 1,
-  inclination: 0.49, // elevation / inclination
-  azimuth: 0.25, // Facing front,
   sun: ! true
 };
 var sky, sunSphere;
@@ -48,7 +46,7 @@ function guiChanged() {
 	 sunPositionが (0,0,-1)辺りを向いてる時が日没。
 	 その時、カメラが(0,0,-1)辺りを向いてると赤い空が映る。
 
-	 これに合うように、sun2, moon2, ground2, カメラの向きを
+	 これに合うように、sun2, moon2, 光の向きを
 	 回してやらないといけない。
    */
   var uniforms = sky.material.uniforms;
@@ -58,16 +56,9 @@ function guiChanged() {
   uniforms[ "luminance" ].value = effectController.luminance;
   uniforms[ "mieCoefficient" ].value = effectController.mieCoefficient;
   uniforms[ "mieDirectionalG" ].value = effectController.mieDirectionalG;
-  var theta = Math.PI * ( effectController.inclination - 0.5 );
-  var phi = 2 * Math.PI * ( effectController.azimuth - 0.5 );
-  sunSphere.position.x = distance * Math.cos( phi );
-  sunSphere.position.y = distance * Math.sin( phi ) * Math.sin( theta );
-  sunSphere.position.z = distance * Math.sin( phi ) * Math.cos( theta );
-  console.log("sunSphere org", sunSphere.position);
   sunSphere.position.x = sun2.position.x*1000;
-  sunSphere.position.y = sun2.position.z*1000;
-  sunSphere.position.z = sun2.position.y*1000;
-  console.log("sun2", sun2.position, sunSphere.position);
+  sunSphere.position.y = sun2.position.y*1000;
+  sunSphere.position.z = sun2.position.z*1000;
   uniforms[ "sunPosition" ].value.copy(sunSphere.position);
 }
 
@@ -212,6 +203,22 @@ function newSettings() {
     .set(0, -Math.sin(angles.th), Math.cos(angles.th))
     .applyQuaternion(celestial.quaternion)
     .multiplyScalar(40);
+
+  var tmp;
+  tmp = sun2.position.y;
+  sun2.position.y = sun2.position.z;
+  sun2.position.z = sun2.position.x;
+  sun2.position.x = tmp;
+  tmp = sun_light2.position.y;
+  sun_light2.position.y = sun_light2.position.z;
+  sun_light2.position.z = sun_light2.position.x;
+  sun_light2.position.x = tmp;
+  tmp = moon2.position.y;
+  moon2.position.y = moon2.position.z;
+  moon2.position.z = moon2.position.x;
+  moon2.position.x = tmp;
+  tmp = ground2.position.y;
+  console.log("ground2", ground2.position);
 
   cameras[2].lookAt(moon2.position);
   guiChanged();
@@ -609,7 +616,7 @@ function init2() {
   cameras.push(camera);
 
   camera.position.set(0,0,0);
-  camera.up = e3.clone();
+  camera.up = e2.clone();
 
     sky.scale.setScalar(450000);
     scene.add(sky);  
@@ -627,8 +634,6 @@ function init2() {
     gui.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( guiChanged );
     gui.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( guiChanged );
     gui.add( effectController, "luminance", 0.0, 2 ).onChange( guiChanged );
-    gui.add( effectController, "inclination", 0, 1, 0.0001 ).onChange( guiChanged );
-    gui.add( effectController, "azimuth", 0, 1, 0.0001 ).onChange( guiChanged );
     gui.add( effectController, "sun" ).onChange( guiChanged );
 
   // 日蝕用に本当の視直径0.52度に合わせる
@@ -676,11 +681,12 @@ function init2() {
 */
 
   if ( !debug ) {
-    var ground2 = new THREE.Mesh(
+    ground2 = new THREE.Mesh(
       new THREE.PlaneGeometry(19,19),
       new THREE.MeshLambertMaterial({ color: 0, emissive: 0x6b4513 }));
-    ground2.position.z = -0.07;
-//    scene.add(ground2);
+    ground2.rotation.set(Math.PI/2, 0, 0);
+    ground2.position.y = -0.07;
+    scene.add(ground2); // なぜ ground2 が見えない??
   }
 
   earth2 = new THREE.Mesh(
