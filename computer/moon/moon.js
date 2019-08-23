@@ -29,6 +29,48 @@ var ground1, earth1, moon1,
     sun_light1, moons_path1;
 var sun2, earth2, moon2, sun_light2;
 
+var effectController = {
+  turbidity: 10,
+  rayleigh: 2,
+  mieCoefficient: 0.005,
+  mieDirectionalG: 0.8,
+  luminance: 1,
+  inclination: 0.49, // elevation / inclination
+  azimuth: 0.25, // Facing front,
+  sun: ! true
+};
+var sky, sunSphere;
+function guiChanged() {
+  /* Skyは座標系が固定されていて変えられない。
+	 (1,0,0) : 北
+	 (0,1,0) : 上
+	 (0,0,1) : 東
+	 sunPositionが (0,0,-1)辺りを向いてる時が日没。
+	 その時、カメラが(0,0,-1)辺りを向いてると赤い空が映る。
+
+	 これに合うように、sun2, moon2, ground2, カメラの向きを
+	 回してやらないといけない。
+   */
+  var uniforms = sky.material.uniforms;
+  var distance = 400000;
+  uniforms[ "turbidity" ].value = effectController.turbidity;
+  uniforms[ "rayleigh" ].value = effectController.rayleigh;
+  uniforms[ "luminance" ].value = effectController.luminance;
+  uniforms[ "mieCoefficient" ].value = effectController.mieCoefficient;
+  uniforms[ "mieDirectionalG" ].value = effectController.mieDirectionalG;
+  var theta = Math.PI * ( effectController.inclination - 0.5 );
+  var phi = 2 * Math.PI * ( effectController.azimuth - 0.5 );
+  sunSphere.position.x = distance * Math.cos( phi );
+  sunSphere.position.y = distance * Math.sin( phi ) * Math.sin( theta );
+  sunSphere.position.z = distance * Math.sin( phi ) * Math.cos( theta );
+  console.log("sunSphere org", sunSphere.position);
+  sunSphere.position.x = sun2.position.x*1000;
+  sunSphere.position.y = sun2.position.z*1000;
+  sunSphere.position.z = sun2.position.y*1000;
+  console.log("sun2", sun2.position, sunSphere.position);
+  uniforms[ "sunPosition" ].value.copy(sunSphere.position);
+}
+
 /* 黄道座標系(arena1の座標系: x方向=春分点 y方向=夏至点 z方向 りゅう座の頭)
    から見た成分vで表されるベクトルの方向にある星を赤道上にある地表Pから見た時の
      th: 南中時の天頂角(南が正)
@@ -172,6 +214,7 @@ function newSettings() {
     .multiplyScalar(40);
 
   cameras[2].lookAt(moon2.position);
+  guiChanged();
 }
 
 function showLabels0(font) {
@@ -552,8 +595,6 @@ function init2() {
       scene = new THREE.Scene(),
       camera = new THREE.PerspectiveCamera(
         0.8, arena.innerWidth() / arena.innerHeight(), 0.07, 100),
-      sky = new Sky(),
-      sunSphere,
       texture = (new THREE.TextureLoader).load(
         'moon.jpeg',
         function() {
@@ -562,7 +603,7 @@ function init2() {
             $('#loading').hide();
         }),
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-
+  sky = new Sky();
   scenes.push(scene);
   renderers.push(renderer);
   cameras.push(camera);
@@ -580,34 +621,6 @@ function init2() {
     sunSphere.visible = false;
     scene.add(sunSphere);
 
-    var effectController = {
-	turbidity: 10,
-	rayleigh: 2,
-	mieCoefficient: 0.005,
-	mieDirectionalG: 0.8,
-	luminance: 1,
-	inclination: 0.49, // elevation / inclination
-	azimuth: 0.25, // Facing front,
-	sun: ! true
-    };
-    var distance = 400;
-
-    function guiChanged() {
-	var uniforms = sky.material.uniforms;
-	uniforms[ "turbidity" ].value = effectController.turbidity;
-	uniforms[ "rayleigh" ].value = effectController.rayleigh;
-	uniforms[ "luminance" ].value = effectController.luminance;
-	uniforms[ "mieCoefficient" ].value = effectController.mieCoefficient;
-	uniforms[ "mieDirectionalG" ].value = effectController.mieDirectionalG;
-	var theta = Math.PI * ( effectController.inclination - 0.5 );
-	var phi = 2 * Math.PI * ( effectController.azimuth - 0.5 );
-	sunSphere.position.x = distance * Math.cos( phi );
-	sunSphere.position.y = distance * Math.sin( phi ) * Math.sin( theta );
-	sunSphere.position.z = distance * Math.sin( phi ) * Math.cos( theta );
-	uniforms[ "sunPosition" ].value.copy(sunSphere.position);
-//	if ( sun2 !== undefined )
-//	    uniforms[ "sunPosition" ].value.copy(sun2.position);
-    }
     var gui = new GUI();
     gui.add( effectController, "turbidity", 1.0, 20.0, 0.1 ).onChange( guiChanged );
     gui.add( effectController, "rayleigh", 0.0, 4, 0.001 ).onChange( guiChanged );
@@ -617,7 +630,6 @@ function init2() {
     gui.add( effectController, "inclination", 0, 1, 0.0001 ).onChange( guiChanged );
     gui.add( effectController, "azimuth", 0, 1, 0.0001 ).onChange( guiChanged );
     gui.add( effectController, "sun" ).onChange( guiChanged );
-    guiChanged();
 
   // 日蝕用に本当の視直径0.52度に合わせる
   moon2 = new THREE.Mesh(
@@ -668,7 +680,7 @@ function init2() {
       new THREE.PlaneGeometry(19,19),
       new THREE.MeshLambertMaterial({ color: 0, emissive: 0x6b4513 }));
     ground2.position.z = -0.07;
-    scene.add(ground2);
+//    scene.add(ground2);
   }
 
   earth2 = new THREE.Mesh(
