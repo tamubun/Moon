@@ -684,9 +684,9 @@ function init2() {
     ground2 = new THREE.Mesh(
       new THREE.PlaneGeometry(19,19),
       new THREE.MeshLambertMaterial({ color: 0, emissive: 0x6b4513 }));
-    ground2.rotation.set(Math.PI/2, 0, 0);
+    ground2.rotation.set(-Math.PI/2, 0, 0);
     ground2.position.y = -0.07;
-    scene.add(ground2); // なぜ ground2 が見えない??
+    scene.add(ground2);
   }
 
   earth2 = new THREE.Mesh(
