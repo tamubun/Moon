@@ -222,6 +222,7 @@ function newSettings() {
 
   cameras[2].lookAt(moon2.position);
   guiChanged();
+  update();
 }
 
 function showLabels0(font) {
@@ -629,12 +630,12 @@ function init2() {
     scene.add(sunSphere);
 
     var gui = new GUI();
-    gui.add( effectController, "turbidity", 1.0, 20.0, 0.1 ).onChange( guiChanged );
-    gui.add( effectController, "rayleigh", 0.0, 4, 0.001 ).onChange( guiChanged );
-    gui.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( guiChanged );
-    gui.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( guiChanged );
-    gui.add( effectController, "luminance", 0.0, 2 ).onChange( guiChanged );
-    gui.add( effectController, "sun" ).onChange( guiChanged );
+    gui.add( effectController, "turbidity", 1.0, 20.0, 0.1 ).onChange( newSettings );
+    gui.add( effectController, "rayleigh", 0.0, 4, 0.001 ).onChange( newSettings );
+    gui.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( newSettings );
+    gui.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( newSettings );
+    gui.add( effectController, "luminance", 0.0, 2 ).onChange( newSettings );
+    gui.add( effectController, "sun" ).onChange( newSettings );
 
   // 日蝕用に本当の視直径0.52度に合わせる
   moon2 = new THREE.Mesh(
