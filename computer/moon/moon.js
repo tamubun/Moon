@@ -633,7 +633,14 @@ function init2() {
     new THREE.SphereGeometry(0.09, 30, 20),
     /* x: 緯度0,経度0, y: 北極, z: 緯度0,東経270
        (http://ja.wikipedia.org/wiki/月面座標 */
-    new THREE.MeshLambertMaterial({ map: texture })
+    new THREE.MeshLambertMaterial(
+	  { map: texture,
+		blending: THREE.CustomBlending,
+		blendEquation: THREE.AddEquation,
+		blendSrc: THREE.OneMinusDstColorFactor,
+		blendDst: THREE.OneFactor,
+		premultipliedAlpha: true
+	  })
   );
   moon2.receiveShadow = true;
 //  moon2.quaternion = moon0.quaternion;
@@ -644,7 +651,7 @@ function init2() {
     moon2.add(new THREE.AxisHelper(0.11));
   }
 
-  sun_light2 = new THREE.DirectionalLight(0xffffff,1.5);
+  sun_light2 = new THREE.DirectionalLight(0xffffff,1.0);
   sun_light2.castShadow = true;
   sun_light2.shadow.mapSize.Width = 512;
   sun_light2.shadow.mapSize.height = 512;
