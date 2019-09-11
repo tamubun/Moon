@@ -204,21 +204,12 @@ function newSettings() {
     .applyQuaternion(celestial.quaternion)
     .multiplyScalar(40);
 
-  var tmp;
-  tmp = sun2.position.y;
-  sun2.position.y = sun2.position.z;
-  sun2.position.z = sun2.position.x;
-  sun2.position.x = tmp;
-  tmp = sun_light2.position.y;
-  sun_light2.position.y = sun_light2.position.z;
-  sun_light2.position.z = sun_light2.position.x;
-  sun_light2.position.x = tmp;
-  tmp = moon2.position.y;
-  moon2.position.y = moon2.position.z;
-  moon2.position.z = moon2.position.x;
-  moon2.position.x = tmp;
-  tmp = ground2.position.y;
-  console.log("ground2", ground2.position);
+  var euler = new THREE.Euler(-Math.PI/2, 0, -Math.PI/2);
+  sun2.position.applyEuler(euler);
+  sun_light2.position.applyEuler(euler);
+  moon2.position.applyEuler(euler);
+  q.setFromEuler(euler);
+  moon2.quaternion.multiplyQuaternions(q, moon2.quaternion);
 
   cameras[2].lookAt(moon2.position);
   guiChanged();
