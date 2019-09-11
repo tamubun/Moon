@@ -434,12 +434,6 @@ function init0() {
   ground0.position.z = -cel_radius*1.1/2;
   scene.add(ground0);
 
-/*
-  var light = new THREE.DirectionalLight(0xffffff);
-  light.position.set(0,0,50);
-  light.target = ground0;
-  scene.add(light);
-*/
   scene.add(new THREE.AmbientLight(0x222));
   renderer.setSize(arena.innerWidth(), arena.innerHeight());
   $('#arena0').append(renderer.domElement);
@@ -545,7 +539,6 @@ function init1() {
   sun_light1 = new THREE.DirectionalLight(0xffffff, 1.2);
   sun_light1.target = earth1;
   scene.add(sun_light1);
-//  scene.add(new THREE.AmbientLight(0x101010));
 
   var sun1 = new THREE.Mesh(
     new THREE.SphereGeometry(arena1_scale*0.1, 30, 20),
@@ -643,7 +636,6 @@ function init2() {
 	  })
   );
   moon2.receiveShadow = true;
-//  moon2.quaternion = moon0.quaternion;
   scene.add(moon2);
   if ( debug ) {
     helper = new THREE.CameraHelper(camera);
@@ -662,22 +654,6 @@ function init2() {
   sun_light2.shadow.camera.bottom = -0.5;
   sun_light2.shadow.camera.top = 0.5;
   scene.add(sun_light2);
-/*
-  // こんな感じにすれば、日中に太陽の光で月が見えないようにできる
-  scene.add(new THREE.AmbientLight('blue'));
-  scene.fog = new THREE.FogExp2('blue',0.08);
-  renderer.setClearColor('blue');
-
-  // こんな感じのやり方で opacityを調節しても出来そう。夕方にも勝手になる。
-  // 但し、このままだと、地平線の辺りに隙間が残る
-  sky2 = new THREE.Mesh(
-    new THREE.PlaneGeometry(1000, 1000),
-    new THREE.MeshLambertMaterial({
-      color: 'red', emissive: 'blue', transparent: true, opacity: 0.7 }));
-  sky2.position.z = 0.1;
-  sky2.rotation.x = Math.PI;
-  scene.add(sky2);
-*/
 
   if ( !debug ) {
     ground2 = new THREE.Mesh(
