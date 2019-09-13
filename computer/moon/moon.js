@@ -3,7 +3,6 @@ import * as THREE from '../../js/three/build/three.module.js';
 import { TrackballControls } from
   '../../js/three/examples/jsm/controls/TrackballControls.js';
 import { Sky } from '../../js/three/examples/jsm/objects/Sky.js';
-import { GUI } from '../../js/three/examples/jsm/libs/dat.gui.module.js';
 
 var debug = false,
     helper;
@@ -29,38 +28,7 @@ var ground1, earth1, moon1,
     sun_light1, moons_path1;
 var sun2, earth2, moon2, sun_light2, ground2;
 
-var effectController = {
-  turbidity: 10,
-  rayleigh: 2,
-  mieCoefficient: 0.005,
-  mieDirectionalG: 0.8,
-  luminance: 1,
-  sun: ! true
-};
-var sky, sunSphere;
-function guiChanged() {
-  /* Skyは座標系が固定されていて変えられない。
-	 (1,0,0) : 北
-	 (0,1,0) : 上
-	 (0,0,1) : 東
-	 sunPositionが (0,0,-1)辺りを向いてる時が日没。
-	 その時、カメラが(0,0,-1)辺りを向いてると赤い空が映る。
-
-	 これに合うように、sun2, moon2, 光の向きを
-	 回してやらないといけない。
-   */
-  var uniforms = sky.material.uniforms;
-  var distance = 400000;
-  uniforms[ "turbidity" ].value = effectController.turbidity;
-  uniforms[ "rayleigh" ].value = effectController.rayleigh;
-  uniforms[ "luminance" ].value = effectController.luminance;
-  uniforms[ "mieCoefficient" ].value = effectController.mieCoefficient;
-  uniforms[ "mieDirectionalG" ].value = effectController.mieDirectionalG;
-  sunSphere.position.x = sun2.position.x*1000;
-  sunSphere.position.y = sun2.position.y*1000;
-  sunSphere.position.z = sun2.position.z*1000;
-  uniforms[ "sunPosition" ].value.copy(sunSphere.position);
-}
+var sky;
 
 /* 黄道座標系(arena1の座標系: x方向=春分点 y方向=夏至点 z方向 りゅう座の頭)
    から見た成分vで表されるベクトルの方向にある星を赤道上にある地表Pから見た時の
@@ -211,8 +179,21 @@ function newSettings() {
   q.setFromEuler(euler);
   moon2.quaternion.multiplyQuaternions(q, moon2.quaternion);
 
+  /* Skyは座標系が固定されていて変えられない。
+	 (1,0,0) : 北
+	 (0,1,0) : 上
+	 (0,0,1) : 東
+	 sunPositionが (0,0,-1)辺りを向いてる時が日没。
+	 その時、カメラが(0,0,-1)辺りを向いてると赤い空が映る。
+
+	 これに合うように、sun2, moon2, 光の向きを
+	 回してやらないといけない。
+   */
+  var uniforms = sky.material.uniforms;
+  uniforms[ "sunPosition" ].value.copy(sun2.position);
+
   cameras[2].lookAt(moon2.position);
-  guiChanged();
+
   update();
 }
 
@@ -604,22 +585,13 @@ function init2() {
   camera.up = e2.clone();
 
     sky.scale.setScalar(450000);
+  var uniforms = sky.material.uniforms;
+  uniforms['turbidity'].value = 11;
+  uniforms['rayleigh'].value = 3;
+  uniforms['luminance'].value = 0.8;
+  uniforms['mieCoefficient'].value = 0.005;
+  uniforms['mieDirectionalG'].value = 0.75;
     scene.add(sky);  
-    sunSphere = new THREE.Mesh(
-	new THREE.SphereBufferGeometry( 20000, 16, 8 ),
-	new THREE.MeshBasicMaterial( { color: 0xffffff } )
-    );
-    sunSphere.position.y = -700000;
-    sunSphere.visible = false;
-    scene.add(sunSphere);
-
-    var gui = new GUI();
-    gui.add( effectController, "turbidity", 1.0, 20.0, 0.1 ).onChange( newSettings );
-    gui.add( effectController, "rayleigh", 0.0, 4, 0.001 ).onChange( newSettings );
-    gui.add( effectController, "mieCoefficient", 0.0, 0.1, 0.001 ).onChange( newSettings );
-    gui.add( effectController, "mieDirectionalG", 0.0, 1, 0.001 ).onChange( newSettings );
-    gui.add( effectController, "luminance", 0.0, 2 ).onChange( newSettings );
-    gui.add( effectController, "sun" ).onChange( newSettings );
 
   // 日蝕用に本当の視直径0.52度に合わせる
   moon2 = new THREE.Mesh(
