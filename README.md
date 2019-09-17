@@ -2,4 +2,4 @@ Moon
 ====
 月の満ち欠けのシミュレーター
 
-<a href="http://userweb.pep.ne.jp/tamubun/computer/moon/index.html">URL</a>
+<a href="http://tamubun.github.io/Moon/">URL</a>
