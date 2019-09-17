@@ -1,8 +1,8 @@
 'use strict';
-import * as THREE from '../../js/three/build/three.module.js';
+import * as THREE from './js/three/build/three.module.js';
 import { TrackballControls } from
-  '../../js/three/examples/jsm/controls/TrackballControls.js';
-import { Sky } from '../../js/three/examples/jsm/objects/Sky.js';
+  './js/three/examples/jsm/controls/TrackballControls.js';
+import { Sky } from './js/three/examples/jsm/objects/Sky.js';
 
 var debug = false,
 	helper;
@@ -278,7 +278,7 @@ function showLabels1(plane, font) {
 function showLabels() {
   var loader = new THREE.FontLoader();
   loader.load(
-	'../../js/three/examples/fonts/helvetiker_regular.typeface.json',
+	'./js/three/examples/fonts/helvetiker_regular.typeface.json',
 	function(font) {
 	  showLabels0(font);
 	  showLabels1(ground1, font);
