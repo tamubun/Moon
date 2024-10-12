@@ -656,6 +656,30 @@ function init2() {
   $('#arena2').append(renderer.domElement);
 }
 
+function textCheckboxClicked(target) {
+  var clicked_span = $('span', target),
+      is_timelike = clicked_span.hasClass('timelike'),
+      target_class = is_timelike ? '.timelike' : '.phaselike';
+
+  if ( clicked_span.hasClass('checked') )
+    return;
+
+  /* sliderをdisable, enableにする方法:
+     https://stackoverflow.com/questions/22146702/is-the-a-common-way-to-disable-enable-jquery-mobile-inputs
+
+     JQ Mobile doc (https://api.jquerymobile.com/1.4/slider/#method-disable) の
+       slider('disable')
+     は、initializeの前には呼べないというエラーで使えなかった */
+  $(target_class)
+    .removeClass('checked')
+    .text('☐')
+    .parent().siblings('div').addClass('ui-state-disabled');
+  clicked_span
+    .addClass('checked')
+    .text('☑')
+    .parent().siblings('div').removeClass('ui-state-disabled');
+}
+
 function update() {
   if ( animate || unloaded_texture > 0)
 	requestAnimationFrame(update);
@@ -701,6 +725,15 @@ function setHandlers() {
 
   $('input').change(function() {
 	update();
+  });
+
+  /* JQ Mobile で、スライダーのフォームに上手くチェックボックスを追加する方法が
+     思いつかなかったので、無理矢理テキストでチェックボックスを表示して、
+     トグルも自前で実装する。
+
+     いい方法が見つかったら修正したい */
+  $('.text-checkbox').parent().on('click', function(ev) {
+    textCheckboxClicked(ev.target);
   });
 }
 
@@ -748,6 +781,15 @@ $(function() {
   showLabels();
 
   setHandlers();
+
+  /* JQ Mobile 1.4.5 Demoに書いてある input elem に
+       disabled='disabled'
+     の属性を付けるだけでは、scriptからenableに出来なかったので、
+     自前で .text-checkbox.checked のスライダーだけ enableにする */
+  $('.text-checkbox')
+    .parent().siblings('div').addClass('ui-state-disabled');
+  $('.text-checkbox.checked')
+    .parent().siblings('div').removeClass('ui-state-disabled');
 
   animate = false;
   newSettings();

@@ -33,6 +33,9 @@
   width: 100%;
   position: absolute;
 }
+.text-checkbox {
+  color: red;
+}
 .ui-field-contain {
   margin: 0.7em;
 }
@@ -62,8 +65,12 @@
     </div>
     <form>
       <div data-role="fieldcontain" style="padding-top: 30px;">
-	<label for='time'>時刻:</label>
+	<label for='time'><span class='text-checkbox timelike checked'>☑</span> 時刻:</label>
 	<input name='time' id='time' class='settings' min='0' max='30' value='12' step='0.1' type='range'>
+      </div>
+      <div data-role="fieldcontain">
+	<label for='moon-pos'><span class='text-checkbox timelike'>☐</span> 月の位置:</label>
+	<input name='moon-pos' id='moon-pos' class='settings' min='0' max='360' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
 	<label for='date' id='date-label'></label>
@@ -74,8 +81,12 @@
 	<input name='latitude' id='latitude' class='settings' min='-90' max='90' value='35' type='range'>
       </div>
       <div data-role="fieldcontain">
-	<label for='lunar-phase'>月の位置:</label>
+	<label for='lunar-phase'><span class='text-checkbox phaselike checked'>☑</span> 3/20の月の位置:</label>
 	<input name='lunar-phase' id='lunar-phase' class='settings' min='0' max='360' value='45' type='range'>
+      </div>
+      <div data-role="fieldcontain">
+	<label for='moon-phase'><span class='text-checkbox phaselike'>☐</span> 月齢:</label>
+	<input name='moon-phase' id='moon-phase' class='settings' min='0' max='29.5' step='0.1' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
 	<label for='node'>昇交点の位置:</label>
@@ -84,7 +95,7 @@
     </form>
 
     <div data-role="collapsible" data-theme="c" data-content-theme="d">
-      <h4>説明</h4>
+      <h4>説明(クリックすると開きます)</h4>
       <p>月の満ち欠けの少し複雑な仕組みを理解するために作ったプログラムです。おまけで日蝕と月蝕の条件も確かめる事ができます。夕方に西に沈む三日月や半月が、なぜ、日本(少なくとも本州ぐらいの緯度)では、右下か真下が光る物しか見られず左下が光ることが無いか、という私の長年の疑問が自分の中で晴れた記念に作りました。</p>
 
       <p>下側二つの図は、マウスの各ボタンでドラッグする事により、向きや遠近を変えたりする事ができます。タブレットやスマホでは、指一本、二本、三本で操作すると同様のことができます。</p>
@@ -120,8 +131,8 @@
 	経度の方は、あまり重要ではないので日本の経度辺りに固定しています。
       </div>
       <div data-role="collapsible">
-	<h5>月の位置</h5>
-	春分の日の12時に、太陽の位置に対して、月がどこにいるかを角度で指定します。0度は春分の正午に新月になっていることを意味し、180度なら春分の正午に満月(月は地球の裏側)になっていることを意味します。単純化のために、月は地球の回りを完全な円軌道で等速で回るとしています。
+	<h5>3/20の月の位置</h5>
+	春分の日(3/20)の12時に、太陽の位置に対して、月がどこにいるかを角度で指定します。0度は春分の正午に新月になっていることを意味し、180度なら春分の正午に満月(月は地球の裏側)になっていることを意味します。単純化のために、月は地球の回りを完全な円軌道で等速で回るとしています。
       </div>
       <div data-role="collapsible">
 	<h5>昇交点の位置</h5>
