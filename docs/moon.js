@@ -16,8 +16,8 @@ var e1 = new THREE.Vector3(1,0,0),
 	earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th)),
 	moon_th = 5.1 / 180.0 * Math.PI,   // 黄道に対する月の公転軸の傾き
 	moon_th2 = -1.5 / 180.0 * Math.PI; // 黄道に対する月の自転軸の傾き(未使用)
-var celestial,		// 天球
-	sun_trajectory,
+var celestial,		// 天球。これはarena0専用なので、celestial0としない。
+	sun_trajectory, // これもarena0専用。
 	ecliptic0,
 	moons_path0,
 	sun0, moon0,
@@ -91,7 +91,11 @@ function newSettings() {
   angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
 
   q.setFromAxisAngle(e2, -date_phase);
+  /* 天球の緯度による傾き */
   celestial.quaternion.setFromAxisAngle(e1, latitude);
+  /* 日周運動。この一行が無ければarena0の太陽は常に南中している。
+     天球にaddされたsun0や黄道、白道等も天球と一緒に日周運動する。
+     moon0は天球にaddされてないので、独立して位置計算する */
   celestial.quaternion.multiply(q);
   sun_trajectory.scale.set(
 	Math.cos(angles.th) * cel_radius, 1, Math.cos(angles.th) * cel_radius);
@@ -112,6 +116,7 @@ function newSettings() {
   ground1.rotation.set(0, Math.PI/2-latitude, 0);
   earth1.quaternion.setFromAxisAngle(e3, angles.phi + date_phase);
   earth1.rotation.x = -earth_th;
+  /* sun1は、sun_light1にaddされてるので、sun1の位置もこれで決まる */
   sun_light1.position.set(
 	Math.cos(year_phase) * arena1_scale * 1.8,
 	Math.sin(year_phase) * arena1_scale * 1.8,
