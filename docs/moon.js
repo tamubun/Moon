@@ -30,6 +30,8 @@ var sun2, earth2, moon2, sun_light2, ground2;
 
 var sky;
 
+const synodic_period = 29.5306;
+
 /* 黄道座標系(arena1の座標系: x方向=春分点 y方向=夏至点 z方向 りゅう座の頭)
    から見た成分vで表されるベクトルの方向にある星を赤道上にある地表Pから見た時の
 	 th: 南中時の天頂角(南が正)
@@ -199,6 +201,23 @@ function newSettings() {
    */
   var uniforms = sky.material.uniforms;
   uniforms[ "sunPosition" ].value.copy(sun2.position);
+
+  /* 月齢の計算。arena1の月の位置と太陽の位置の関係から求める */
+  var moon_angle = Math.atan2(moon_vec.y, moon_vec.x);
+  if ( moon_angle < 0 ) // atan2 は -pi .. piの値を返す
+    moon_angle += Math.PI * 2;
+  var diff = moon_angle - year_phase;
+  if ( diff < 0 )
+    diff += Math.PI * 2;
+  else if ( diff > Math.PI * 2 )
+    diff -= Math.PI * 2;
+  var moon_phase = diff/Math.PI/2 * synodic_period;
+  /* sliderのstep数 0.1刻みに合わせて四捨五入する */
+  moon_phase = Math.round(moon_phase*10) / 10;
+  if ( $('#moon-phase').val() != moon_phase ) {
+    /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
+    $('#moon-phase').val(moon_phase).slider('refresh');
+  }
 
   cameras[2].lookAt(moon2.position);
 
