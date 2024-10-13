@@ -79,7 +79,7 @@ function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
 	  year_phase = $('#date').val()/365.0*2*Math.PI,
 	  date_phase = $('#time').val()/24.0*2*Math.PI - Math.PI,
-	  lunar_phase = $('#lunar-phase').val()/360*2*Math.PI,
+	  lunar_phase = $('#lunar-phase').val()/180*Math.PI,
 	  node_phase =	$('#node').val()/180*Math.PI,
 	  angles,
 	  q = new THREE.Quaternion(),
@@ -87,7 +87,7 @@ function newSettings() {
 
   $('#date-label').text('日付: ' + calcDate(+$('#date').val()));
   lunar_phase +=
-	(+$('#date').val()+($('#time').val()-12)/24.0)/29.5306*2*Math.PI;
+	(+$('#date').val()+($('#time').val()-12)/24.0)/synodic_period*2*Math.PI;
   year_phase +=
 	($('#time').val()-12)/24.0/365.0*2*Math.PI;
   angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
