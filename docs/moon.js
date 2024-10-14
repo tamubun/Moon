@@ -75,22 +75,70 @@ function calcDate(d) {
   return ""+(m+3)+"/"+(d+1) + attr;
 }
 
+/* .phaselikeのチェックボックスによって lunar-phase-init, moon-phase
+   の一方から他方を定め直し、スライダーの値も書き換える。
+
+   lunar_pnase: 月齢を角度にした値、つまり、りゅう座の頭からみた
+   月と太陽の角度差([0..2pi]ではない)を返す */
+function correct_phaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
+  var lunar_phase;
+
+  if ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) {
+    lunar_phase = lunar_phase_init + lunar_phase_diff;
+    var w=Math.floor(lunar_phase / (2* Math.PI));
+    moon_phase = (lunar_phase - w*2*Math.PI)/2/Math.PI * synodic_period;
+
+    /* sliderのstep数 0.1刻みに合わせて四捨五入する */
+    moon_phase = Math.round(moon_phase*10) / 10;
+    if ( $('#moon-phase').val() != moon_phase ) {
+      /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
+      $('#moon-phase').val(moon_phase).slider('refresh');
+    }
+  } else {
+    lunar_phase = moon_phase / synodic_period * 2*Math.PI;
+    lunar_phase_init = lunar_phase - lunar_phase_diff;
+    if ( lunar_phase_init < 0 ) {
+      var w = Math.floor(lunar_phase_init / (2*Math.PI));
+      lunar_phase_init -= w*2*Math.PI;
+    }
+    lunar_phase_init = lunar_phase_init / Math.PI * 180;
+
+    /* sliderのstep数 1刻みに合わせて四捨五入する */
+    lunar_phase_init = Math.round(lunar_phase_init);
+    if ( $('#lunar-phase-init').val() != lunar_phase_init ) {
+      /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
+      $('#lunar-phase-init').val(lunar_phase_init).slider('refresh');
+    }
+  }
+
+  return lunar_phase;
+}
+
 function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
 	  year_phase = $('#date').val()/365.0*2*Math.PI,
 	  date_phase = $('#time').val()/24.0*2*Math.PI - Math.PI,
-	  lunar_phase = $('#lunar-phase').val()/180*Math.PI,
+	  lunar_phase_init = $('#lunar-phase-init').val()/180*Math.PI,
+      lunar_phase, lunar_phase_diff,
+	  moon_phase = $('#moon-phase').val(),
 	  node_phase =	$('#node').val()/180*Math.PI,
 	  angles,
 	  q = new THREE.Quaternion(),
 	  v = new THREE.Vector3();
 
   $('#date-label').text('日付: ' + calcDate(+$('#date').val()));
-  lunar_phase +=
-	(+$('#date').val()+($('#time').val()-12)/24.0)/synodic_period*2*Math.PI;
   year_phase +=
 	($('#time').val()-12)/24.0/365.0*2*Math.PI;
   angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
+
+  lunar_phase_diff =
+    (+$('#date').val()+($('#time').val()-12)/24.0)/synodic_period*2*Math.PI;
+
+  /* lunar-phase-init と moon-phaseは、どちらか一方からもう一方を定める。
+     moon-phaseのチェックボックスがcheckedの時には、lunar-phase-initは書き換える。
+     逆に、lunar-phase-initがcheckedの時には、moon-phaseを書き換える */
+  lunar_phase =
+    correct_phaselike(lunar_phase_init, moon_phase, lunar_phase_diff);
 
   q.setFromAxisAngle(e2, -date_phase);
   /* 天球の緯度による傾き */
@@ -201,23 +249,6 @@ function newSettings() {
    */
   var uniforms = sky.material.uniforms;
   uniforms[ "sunPosition" ].value.copy(sun2.position);
-
-  /* 月齢の計算。arena1の月の位置と太陽の位置の関係から求める */
-  var moon_angle = Math.atan2(moon_vec.y, moon_vec.x);
-  if ( moon_angle < 0 ) // atan2 は -pi .. piの値を返す
-    moon_angle += Math.PI * 2;
-  var diff = moon_angle - year_phase;
-  if ( diff < 0 )
-    diff += Math.PI * 2;
-  else if ( diff > Math.PI * 2 )
-    diff -= Math.PI * 2;
-  var moon_phase = diff/Math.PI/2 * synodic_period;
-  /* sliderのstep数 0.1刻みに合わせて四捨五入する */
-  moon_phase = Math.round(moon_phase*10) / 10;
-  if ( $('#moon-phase').val() != moon_phase ) {
-    /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
-    $('#moon-phase').val(moon_phase).slider('refresh');
-  }
 
   cameras[2].lookAt(moon2.position);
 
