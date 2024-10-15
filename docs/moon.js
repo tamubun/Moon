@@ -75,6 +75,22 @@ function calcDate(d) {
   return ""+(m+3)+"/"+(d+1) + attr;
 }
 
+/* 時刻から月の位置を定めてスライダーの値を書き換える。
+   逆は未実装  */
+function correct_timelike(moon_orient) {
+  /* 北から南を見た軸回りの月の角度(0..360)。月の出: 0, 南中: pi/2, 月の入り:pi */
+  var angle = Math.atan2(moon_orient.z, moon_orient.x);
+  if ( angle < 0 )
+    angle += 2*Math.PI;
+
+  /* sliderのstep数 1刻みに合わせて四捨五入する */
+  var moon_pos = Math.round(angle/Math.PI*180);
+  if ( $('#moon-pos').val() != moon_pos ) {
+    /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
+    $('#moon-pos').val(moon_pos).slider('refresh');
+  }
+}
+
 /* .phaselikeのチェックボックスによって lunar-phase-init, moon-phase
    の一方から他方を定め直し、スライダーの値も書き換える。
 
@@ -193,13 +209,15 @@ function newSettings() {
 	1.4 * arena1_scale * moon_vec.y,
 	1.4 * arena1_scale * moon_vec.z);
   var moon_angles = eclipticToGround(moon_vec);
+  /* 赤道、正午のarena0における月の方向 */
   v.set(
 	Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - angles.phi),
 	-Math.sin(moon_angles.th),
 	Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - angles.phi));
-  moon0.position.copy(
-	v.clone().
-	  applyQuaternion(celestial.quaternion).multiplyScalar(cel_radius * 0.95));
+  /* 指定された緯度、時刻のarena0における月の方向 */
+  var v1 = v.clone().applyQuaternion(celestial.quaternion);
+  moon0.position.copy(v1.multiplyScalar(cel_radius * 0.95));
+  correct_timelike(v1);
 
   moon2.position.copy(
 	v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20));
