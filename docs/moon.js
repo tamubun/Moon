@@ -730,7 +730,7 @@ function init2() {
   $('#arena2').append(renderer.domElement);
 }
 
-function textCheckboxClicked(target) {
+function textRadioClicked(target) {
   var clicked_span = $('span', target),
       is_timelike = clicked_span.hasClass('timelike'),
       target_class = is_timelike ? '.timelike' : '.phaselike';
@@ -746,11 +746,9 @@ function textCheckboxClicked(target) {
      は、initializeの前には呼べないというエラーで使えなかった */
   $(target_class)
     .removeClass('checked')
-    .text('☐')
     .parent().siblings('div').addClass('ui-state-disabled');
   clicked_span
     .addClass('checked')
-    .text('☑')
     .parent().siblings('div').removeClass('ui-state-disabled');
 }
 
@@ -806,8 +804,8 @@ function setHandlers() {
      トグルも自前で実装する。
 
      いい方法が見つかったら修正したい */
-  $('.text-checkbox').parent().on('click', function(ev) {
-    textCheckboxClicked(ev.target);
+  $('.text-radio').parent().on('click', function(ev) {
+    textRadioClicked(ev.target);
   });
 }
 
@@ -859,10 +857,10 @@ $(function() {
   /* JQ Mobile 1.4.5 Demoに書いてある input elem に
        disabled='disabled'
      の属性を付けるだけでは、scriptからenableに出来なかったので、
-     自前で .text-checkbox.checked のスライダーだけ enableにする */
-  $('.text-checkbox')
+     自前で .text-radio.checked のスライダーだけ enableにする */
+  $('.text-radio')
     .parent().siblings('div').addClass('ui-state-disabled');
-  $('.text-checkbox.checked')
+  $('.text-radio.checked')
     .parent().siblings('div').removeClass('ui-state-disabled');
 
   animate = false;
