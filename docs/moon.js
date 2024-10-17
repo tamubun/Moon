@@ -75,19 +75,23 @@ function calcDate(d) {
   return ""+(m+3)+"/"+(d+1) + attr;
 }
 
-/* 時刻から月の位置を定めてスライダーの値を書き換える。
+/* 時刻から太陽の位置(日の出、日の入りなどの角度)を定めてスライダーの値を書き換える。
+   sun_orient は、赤道、正午のarena0における太陽の方向ベクトル。
+
    逆は未実装  */
-function correct_timelike(moon_orient) {
-  /* 北から南を見た軸回りの月の角度(0..360)。月の出: 0, 南中: pi/2, 月の入り:pi */
-  var angle = Math.atan2(moon_orient.z, moon_orient.x);
+function correct_timelike(sun_orient) {
+  var orient = sun_orient.clone().applyQuaternion(celestial.quaternion);
+
+  /* 北から南を見た軸回りの太陽の角度(0..360)。月の出: 0, 南中: pi/2, 月の入り:pi */
+  var angle = Math.atan2(orient.z, orient.x);
   if ( angle < 0 )
     angle += 2*Math.PI;
 
   /* sliderのstep数 1刻みに合わせて四捨五入する */
-  var moon_pos = Math.round(angle/Math.PI*180);
-  if ( $('#moon-pos').val() != moon_pos ) {
+  var sun_pos = Math.round(angle/Math.PI*180);
+  if ( $('#sun-pos').val() != sun_pos ) {
     /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
-    $('#moon-pos').val(moon_pos).slider('refresh');
+    $('#sun-pos').val(sun_pos).slider('refresh');
   }
 }
 
@@ -166,8 +170,10 @@ function newSettings() {
   sun_trajectory.scale.set(
 	Math.cos(angles.th) * cel_radius, 1, Math.cos(angles.th) * cel_radius);
   sun_trajectory.position.y = -Math.sin(angles.th) * cel_radius;
-  sun0.position.set(
-	0, -Math.sin(angles.th) * cel_radius, Math.cos(angles.th) * cel_radius);
+  /* 赤道、正午のarena0における太陽の方向 */
+  v.set(0, -Math.sin(angles.th), Math.cos(angles.th));
+  correct_timelike(v);
+  sun0.position.copy(v.clone().multiplyScalar(cel_radius));
   ecliptic0.rotation.set(0,-angles.phi, earth_th);
   /* 白道はローカル座標系で、黄道に重ねるように赤道を回し、そのあと5.1度傾ける。
 	 と言うことは、グローバル座標系では、掛け算の順を逆にする */
@@ -217,7 +223,6 @@ function newSettings() {
   /* 指定された緯度、時刻のarena0における月の方向 */
   var v1 = v.clone().applyQuaternion(celestial.quaternion);
   moon0.position.copy(v1.multiplyScalar(cel_radius * 0.95));
-  correct_timelike(v1);
 
   moon2.position.copy(
 	v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20));
