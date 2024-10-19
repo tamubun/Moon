@@ -208,6 +208,38 @@ function correct_phaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
   return lunar_phase;
 }
 
+/* 赤道、正午のarena0における月の方向を計算して返す */
+function calc_moon_dir_canonical(
+  lunar_phase, node_phase, year_phase, sun_angles)
+{
+  var d = lunar_phase + node_phase + year_phase, // 昇交点と月との黄経差
+	  psi,		// 昇交点からの月の軌道上での回転角
+	  moon_vec, // 月の方向 (arena1での座標系)
+      q = new THREE.Quaternion();
+
+  d = d - 2*Math.PI * Math.floor(d/2.0/Math.PI);
+  if ( Math.abs(Math.cos(d)) < 0.001 ) {
+	psi = Math.sin(d) > 0 ? Math.PI / 2 : Math.PI * 1.5;
+  } else {
+	psi = Math.atan(Math.tan(d) / Math.cos(moon_th));
+	if ( d > Math.PI/2 && d <= Math.PI * 1.5 )
+	  psi = Math.PI + psi;
+  }
+  q.setFromAxisAngle(e3, psi);
+  q.multiplyQuaternions(moons_path1.quaternion, q);
+  moon_vec = e1.clone().applyQuaternion(q);
+  moon1.position.set(
+	1.4 * arena1_scale * moon_vec.x,
+	1.4 * arena1_scale * moon_vec.y,
+	1.4 * arena1_scale * moon_vec.z);
+  var moon_angles = eclipticToGround(moon_vec);
+
+  return new THREE.Vector3(
+	Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - sun_angles.phi),
+	-Math.sin(moon_angles.th),
+	Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - sun_angles.phi));
+}
+
 function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
 	  year_phase = $('#date').val()/365.0*2*Math.PI,
@@ -284,30 +316,10 @@ function newSettings() {
 
   q.setFromAxisAngle(e1, moon_th);
   moons_path1.quaternion.setFromAxisAngle(e3, -node_phase).multiply(q);
-  var d = lunar_phase + node_phase + year_phase, // 昇交点と月との黄経差
-	  psi,		// 昇交点からの月の軌道上での回転角
-	  moon_vec; // 月の方向 (arena1での座標系)
-  d = d - 2*Math.PI * Math.floor(d/2.0/Math.PI);
-  if ( Math.abs(Math.cos(d)) < 0.001 ) {
-	psi = Math.sin(d) > 0 ? Math.PI / 2 : Math.PI * 1.5;
-  } else {
-	psi = Math.atan(Math.tan(d) / Math.cos(moon_th));
-	if ( d > Math.PI/2 && d <= Math.PI * 1.5 )
-	  psi = Math.PI + psi;
-  }
-  q.setFromAxisAngle(e3, psi);
-  q.multiplyQuaternions(moons_path1.quaternion, q);
-  moon_vec = e1.clone().applyQuaternion(q);
-  moon1.position.set(
-	1.4 * arena1_scale * moon_vec.x,
-	1.4 * arena1_scale * moon_vec.y,
-	1.4 * arena1_scale * moon_vec.z);
-  var moon_angles = eclipticToGround(moon_vec);
+
   /* 赤道、正午のarena0における月の方向 */
-  var moon_dir_canonical = new THREE.Vector3(
-	Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - angles.phi),
-	-Math.sin(moon_angles.th),
-	Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - angles.phi));
+  var moon_dir_canonical = calc_moon_dir_canonical(
+    lunar_phase, node_phase, year_phase, angles);
   /* 指定された緯度、時刻のarena0における月の方向 */
   var moon_dir = moon_dir_canonical.clone().applyQuaternion(
     celestial.quaternion);
