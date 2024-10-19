@@ -75,27 +75,101 @@ function calcDate(d) {
   return ""+(m+3)+"/"+(d+1) + attr;
 }
 
-/* 時刻から太陽の位置(日の出、日の入りなどの角度)を定めてスライダーの値を書き換える。
-   sun_orient は、赤道、正午のarena0における太陽の方向ベクトル。
+/* ニュートン法でθを求める。0..piの値を返す。
 
-   逆は未実装  */
-function correct_timelike(sun_orient) {
-  var orient = sun_orient.clone().applyQuaternion(celestial.quaternion);
+   GPTに教わった方法を応用 */
+function findTheta(v, a, sine, tolerance = 5e-5, max_iter = 1000) {
+  /* 初期値 theta=0 では、curr_sin = 1で微分が 0 になるので収束しない */
+  var theta = Math.PI/4;
+  var iter = 0;
 
-  /* 北から南を見た軸回りの太陽の角度(0..360)。月の出: 0, 南中: pi/2, 月の入り:pi */
-  var angle = Math.atan2(orient.z, orient.x);
-  if ( angle < 0 )
-    angle += 2*Math.PI;
+  while (iter < max_iter) {
+    var rot_vec = v.clone().applyAxisAngle(a, theta);
+    var curr_sin = rot_vec.z / Math.sqrt(rot_vec.x**2 + rot_vec.z**2);
 
-  /* sliderのstep数 1刻みに合わせて四捨五入する */
-  var sun_pos = Math.round(angle/Math.PI*180);
-  if ( $('#sun-pos').val() != sun_pos ) {
-    /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
-    $('#sun-pos').val(sun_pos).slider('refresh');
+    var error = curr_sin - sine;
+    if (Math.abs(error) < tolerance)
+      break; // 許容誤差内
+
+    // 数値微分
+    var d_th = 1e-6;  // 微小変化
+    var new_vec = v.clone().applyAxisAngle(a, theta + d_th);
+    var new_sin = new_vec.z / Math.sqrt(new_vec.x**2 + new_vec.z**2);
+    var deriv = (new_sin - curr_sin) / d_th;
+
+    // ニュートン法で更新
+    theta -= error / deriv;
+
+    iter++;
   }
+  if (iter >= max_iter )
+    console.log('Iter');
+
+  /* rot_vecが変わらないようにしつつ、thetaの範囲を 0..piに入るように調整 */
+  while ( theta < 0 )
+    theta += Math.PI*2;
+  var q = Math.floor(theta/Math.PI/2);
+  theta -= q * Math.PI * 2;
+  if ( theta >= Math.PI )
+    theta = Math.PI*2 - theta;
+
+  return theta;
 }
 
-/* .phaselikeのチェックボックスによって lunar-phase-init, moon-phase
+/* .timelikeのラジオボタンによって time, sun-pos(日の出、日の入りなどの角度)
+   の一方から他方を定め直し、スライダーの値も書き換える。
+
+   date_phase(timeを書き換えた場合は、それに対応する新しい値)を返す。
+
+   白夜などがある高緯度になるとsun-posからtimeが定められなくなるし、
+   定められる状況でもニュートン法が収束しづらくなるので不正確な結果になるが、
+   当面ほっとく。
+
+   sun_dir は、赤道、正午のarena0における太陽の方向ベクトル
+   (sun_posからdate_phaseを決め直す時でも、変更前の値から決めた sun_dir
+   を使うが、気にしない事にする)。 */
+function correct_timelike(date_phase, sun_pos, sun_dir_canonical, latitude) {
+  var theta;
+
+  if ( $('label[for=time]>span').hasClass('checked') ) {
+    var sun_dir = sun_dir_canonical.clone().applyQuaternion(
+      celestial.quaternion);
+
+    // 北から南を見た軸回りの太陽の角度(0..360)。日の出: 0, 南中: pi/2, 日の入り:pi
+    theta = Math.atan2(sun_dir.z, sun_dir.x);
+    if ( theta < 0 )
+      theta += 2*Math.PI;
+
+    /* sliderのstep数 1刻みに合わせて四捨五入する */
+    var sun_pos = Math.round(theta/Math.PI*180);
+    if ( $('#sun-pos').val() != sun_pos ) {
+      /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
+      $('#sun-pos').val(sun_pos).slider('refresh');
+    }
+  } else {
+    var polaris_dir = e2.clone().applyAxisAngle(e1, latitude);
+    sun_dir = sun_dir_canonical.clone().applyAxisAngle(e1, latitude);
+    /* tan では決められない。日の出(sun_pos=-pi/2)、日の入り(sun_pos=pi/2) どちらも
+       tan(sun_pos)が発散してる。
+       sin(sun_pos)で決めるようにして、結果を場合分けする。 */
+    date_phase = findTheta(sun_dir, polaris_dir.negate(), Math.sin(sun_pos))
+    // findThetaは0..piの値を返す
+    if ( Math.cos(sun_pos) >= 0 )
+      date_phase = -date_phase;
+
+    var time_val = (date_phase + Math.PI)/Math.PI/2 * 24.0;
+    /* sliderのstep数 1刻みに合わせて四捨五入する */
+    time_val = Math.round(time_val*10) / 10;
+    if ( $('#time').val() != time_val ) {
+      /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
+      $('#time').val(time_val).slider('refresh');
+    }
+  }
+
+  return date_phase;
+}
+
+/* .phaselikeのラジオボタンによって lunar-phase-init, moon-phase
    の一方から他方を定め直し、スライダーの値も書き換える。
 
    lunar_pnase: 月齢を角度にした値、つまり、りゅう座の頭からみた
@@ -137,43 +211,57 @@ function correct_phaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
 function newSettings() {
   var latitude = $('#latitude').val() / 180.0 * Math.PI,
 	  year_phase = $('#date').val()/365.0*2*Math.PI,
-	  date_phase = $('#time').val()/24.0*2*Math.PI - Math.PI,
+	  date_phase = ($('#time').val()-12)/24.0*2*Math.PI, // 12時が 0.0
+      sun_pos = $('#sun-pos').val()/ 180.0 * Math.PI,
 	  lunar_phase_init = $('#lunar-phase-init').val()/180*Math.PI,
       lunar_phase, lunar_phase_diff,
 	  moon_phase = $('#moon-phase').val(),
 	  node_phase =	$('#node').val()/180*Math.PI,
 	  angles,
-	  q = new THREE.Quaternion(),
-	  v = new THREE.Vector3();
+	  q = new THREE.Quaternion();
 
   $('#date-label').text('日付: ' + calcDate(+$('#date').val()));
-  year_phase +=
-	($('#time').val()-12)/24.0/365.0*2*Math.PI;
+  year_phase += date_phase/365.0;
   angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
+  /* 赤道、正午のarena0における太陽の方向 */
+  var sun_dir_canonical = new THREE.Vector3(
+    0, -Math.sin(angles.th), Math.cos(angles.th));
+
+  /* time と sun-posは、どちらか一方からもう一方を定める。
+     sun-posのラジオボタンがcheckedの時には、timeは書き換える。
+     逆に、timeがcheckedの時には、sun-posを書き換える */
+  date_phase = correct_timelike(
+    date_phase, sun_pos, sun_dir_canonical, latitude);
+
+  /* date_phaseが変わるので、year_phase, angles, sun_dir_canonicalを再計算 */
+  year_phase = $('#date').val()/365.0*2*Math.PI + date_phase/365.0;
+  angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
+  sun_dir_canonical.set(0, -Math.sin(angles.th), Math.cos(angles.th));
 
   lunar_phase_diff =
     (+$('#date').val()+($('#time').val()-12)/24.0)/synodic_period*2*Math.PI;
 
   /* lunar-phase-init と moon-phaseは、どちらか一方からもう一方を定める。
-     moon-phaseのチェックボックスがcheckedの時には、lunar-phase-initは書き換える。
+     moon-phaseのラジオボタンがcheckedの時には、lunar-phase-initは書き換える。
      逆に、lunar-phase-initがcheckedの時には、moon-phaseを書き換える */
   lunar_phase =
     correct_phaselike(lunar_phase_init, moon_phase, lunar_phase_diff);
 
-  q.setFromAxisAngle(e2, -date_phase);
   /* 天球の緯度による傾き */
   celestial.quaternion.setFromAxisAngle(e1, latitude);
+
+  q.setFromAxisAngle(e2, -date_phase);
   /* 日周運動。この一行が無ければarena0の太陽は常に南中している。
      天球にaddされたsun0や黄道、白道等も天球と一緒に日周運動する。
-     moon0は天球にaddされてないので、独立して位置計算する */
+     moon0は天球にaddされてないので、独立して位置計算する。
+
+     quaternionの掛け算の順序が見づらいが、緯度の回転の後に日周運動の回転を掛けるので、
+     天球は最初に日周運動で回してから緯度で回した事になる。 */
   celestial.quaternion.multiply(q);
   sun_trajectory.scale.set(
 	Math.cos(angles.th) * cel_radius, 1, Math.cos(angles.th) * cel_radius);
   sun_trajectory.position.y = -Math.sin(angles.th) * cel_radius;
-  /* 赤道、正午のarena0における太陽の方向 */
-  v.set(0, -Math.sin(angles.th), Math.cos(angles.th));
-  correct_timelike(v);
-  sun0.position.copy(v.clone().multiplyScalar(cel_radius));
+  sun0.position.copy(sun_dir_canonical.clone().multiplyScalar(cel_radius));
   ecliptic0.rotation.set(0,-angles.phi, earth_th);
   /* 白道はローカル座標系で、黄道に重ねるように赤道を回し、そのあと5.1度傾ける。
 	 と言うことは、グローバル座標系では、掛け算の順を逆にする */
@@ -216,16 +304,18 @@ function newSettings() {
 	1.4 * arena1_scale * moon_vec.z);
   var moon_angles = eclipticToGround(moon_vec);
   /* 赤道、正午のarena0における月の方向 */
-  v.set(
+  var moon_dir_canonical = new THREE.Vector3(
 	Math.cos(moon_angles.th) * Math.sin(moon_angles.phi - angles.phi),
 	-Math.sin(moon_angles.th),
 	Math.cos(moon_angles.th) * Math.cos(moon_angles.phi - angles.phi));
   /* 指定された緯度、時刻のarena0における月の方向 */
-  var v1 = v.clone().applyQuaternion(celestial.quaternion);
-  moon0.position.copy(v1.multiplyScalar(cel_radius * 0.95));
+  var moon_dir = moon_dir_canonical.clone().applyQuaternion(
+    celestial.quaternion);
+  moon0.position.copy(moon_dir.multiplyScalar(cel_radius * 0.95));
 
   moon2.position.copy(
-	v.clone().applyQuaternion(celestial.quaternion).multiplyScalar(20));
+	moon_dir_canonical.clone().applyQuaternion(
+      celestial.quaternion).multiplyScalar(20));
   /* arena0座標で、赤道上からみて月の北極が向いている方向を定める。
 	 月は、その軸回りを自転する。
 	 月の北極は、黄道軸と一致していると近似。ほんとは moon_th2傾いてる */
@@ -804,8 +894,8 @@ function setHandlers() {
 	update();
   });
 
-  /* JQ Mobile で、スライダーのフォームに上手くチェックボックスを追加する方法が
-     思いつかなかったので、無理矢理テキストでチェックボックスを表示して、
+  /* JQ Mobile で、スライダーのフォームに上手くラジオボタンを追加する方法が
+     思いつかなかったので、無理矢理テキストでラジオボタンを表示して、
      トグルも自前で実装する。
 
      いい方法が見つかったら修正したい */
