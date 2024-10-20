@@ -13,7 +13,6 @@ var e1 = new THREE.Vector3(1,0,0),
 	e3 = new THREE.Vector3(0,0,1),
 	zero = new THREE.Vector3(0,0,0),
 	earth_th = 23.4 / 180.0 * Math.PI,
-	earth_axis = new THREE.Vector3(0,Math.sin(earth_th),Math.cos(earth_th)),
 	moon_th = 5.1 / 180.0 * Math.PI,   // 黄道に対する月の公転軸の傾き
 	moon_th2 = -1.5 / 180.0 * Math.PI; // 黄道に対する月の自転軸の傾き(未使用)
 var celestial,		// 天球。これはarena0専用なので、celestial0としない。
