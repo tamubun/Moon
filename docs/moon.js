@@ -74,10 +74,17 @@ function calcDate(d) {
   return ""+(m+3)+"/"+(d+1) + attr;
 }
 
-/* ニュートン法でθを求める。0..piの値を返す。
+/* arena0座標で、aを軸にして、南中しているベクトル(v.x=0)を回転する角度 thetaを
+   回転後のベクトル v'として、atan2(v'_z, v'_x) = cosine/sine になるように定める。
 
-   GPTに教わった方法を応用 */
-function findTheta(v, a, sine, tolerance = 5e-5, max_iter = 1000) {
+   -pi..piの値を返す。
+
+   v.x = 0 条件を課しているのは、結果に不定性が出るのをどうやって消していいか
+   分からなかった為。v.x = 0 の時だけは(きっと上手くいく)。
+   但し、そもそも解無しの高緯度地方では結果は不定。
+
+   Newton法を使えばいいと言うのはGPTに教わった。 */
+function findTheta(v, a, sine, cosine, tolerance = 5e-5, max_iter = 1000) {
   /* 初期値 theta=0 では、curr_sin = 1で微分が 0 になるので収束しない */
   var theta = Math.PI/4;
   var iter = 0;
@@ -104,7 +111,7 @@ function findTheta(v, a, sine, tolerance = 5e-5, max_iter = 1000) {
   if (iter >= max_iter )
     console.log('Iter');
 
-  /* rot_vecが変わらないようにしつつ、thetaの範囲を 0..piに入るように調整 */
+  // rot_vecが変わらないようにしつつ、thetaの範囲を 0..piに入るように調整
   while ( theta < 0 )
     theta += Math.PI*2;
   var q = Math.floor(theta/Math.PI/2);
@@ -112,11 +119,45 @@ function findTheta(v, a, sine, tolerance = 5e-5, max_iter = 1000) {
   if ( theta >= Math.PI )
     theta = Math.PI*2 - theta;
 
+  // cosineの符号に合うように thetaを調整
+  if ( cosine >= 0 )
+    theta = -theta;
+
   return theta;
 }
 
-/* .timelikeのラジオボタンによって time, sun-pos(日の出、日の入りなどの角度)
-   の一方から他方を定め直し、スライダーの値も書き換える。
+/* arena0座標で 正午に赤道上 canonical_dir 方向(南中してること)にある星を日周運動させて
+   posの角度(星が出る時: pos=0, 南中: pos=pi/2, 沈む時: pos=pi)に来る時間を求める。
+   時間を位相にした値(12時が0)を返す。*/
+function getDatePhase(canonical_dir, latitude, pos ) {
+  var polaris_dir = e2.clone().applyAxisAngle(e1, latitude);
+  var dir = canonical_dir.applyAxisAngle(e1, latitude);
+
+
+  /* tan(pos) では決められない。南中でtan(pos)が発散するし他の値でも不定性がある。
+     sin(pos)で決めるようにして、cos(pos)で不定性を除く */
+  var date_phase = findTheta( // findThetaは-pi..piの値を返す
+    dir, polaris_dir.negate(), Math.sin(pos), Math.cos(pos))
+
+  return date_phase;
+}
+
+/* .timelikeのスライダーの値を定める */
+function setTimelikeSlider(date_phase) {
+  var time_val = (date_phase + Math.PI)/Math.PI/2 * 24.0;
+  /* sliderのstep数 1刻みに合わせて四捨五入する */
+  time_val = Math.round(time_val*10) / 10;
+  if ( $('#time').val() != time_val ) {
+    /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
+    $('#time').val(time_val).slider('refresh');
+  }
+}
+
+/* .timelikeのラジオボタンによって
+     time
+     sun-pos (日の出、日の入りなどの角度)
+     moon-pos (月の出、月の入りなどの角度)
+   のいづれかから他を定め直し、スライダーの値も書き換える。
 
    date_phase(timeを書き換えた場合は、それに対応する新しい値)を返す。
 
@@ -127,10 +168,14 @@ function findTheta(v, a, sine, tolerance = 5e-5, max_iter = 1000) {
    sun_dir は、赤道、正午のarena0における太陽の方向ベクトル
    (sun_posからdate_phaseを決め直す時でも、変更前の値から決めた sun_dir
    を使うが、気にしない事にする)。 */
-function correct_timelike(date_phase, sun_pos, sun_dir_canonical, latitude) {
+function correct_timelike(
+  date_phase, sun_pos, moon_pos, sun_dir_canonical, latitude, phi)
+{
   var theta;
 
   if ( $('label[for=time]>span').hasClass('checked') ) {
+    /* #time の値から、#sun-pos, #moon-pos を決め直す */
+
     var sun_dir = sun_dir_canonical.clone().applyQuaternion(
       celestial.quaternion);
 
@@ -145,24 +190,47 @@ function correct_timelike(date_phase, sun_pos, sun_dir_canonical, latitude) {
       /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
       $('#sun-pos').val(sun_pos).slider('refresh');
     }
-  } else {
-    var polaris_dir = e2.clone().applyAxisAngle(e1, latitude);
-    sun_dir = sun_dir_canonical.clone().applyAxisAngle(e1, latitude);
-    /* tan では決められない。日の出(sun_pos=-pi/2)、日の入り(sun_pos=pi/2) どちらも
-       tan(sun_pos)が発散してる。
-       sin(sun_pos)で決めるようにして、結果を場合分けする。 */
-    date_phase = findTheta(sun_dir, polaris_dir.negate(), Math.sin(sun_pos))
-    // findThetaは0..piの値を返す
-    if ( Math.cos(sun_pos) >= 0 )
-      date_phase = -date_phase;
+  } else if ( $('label[for=sun-pos]>span').hasClass('checked') ) {
+    /* #sun-pos の値から、#time, #moon-pos を決め直す */
 
-    var time_val = (date_phase + Math.PI)/Math.PI/2 * 24.0;
-    /* sliderのstep数 1刻みに合わせて四捨五入する */
-    time_val = Math.round(time_val*10) / 10;
-    if ( $('#time').val() != time_val ) {
-      /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
-      $('#time').val(time_val).slider('refresh');
-    }
+    date_phase = getDatePhase(sun_dir_canonical.clone(), latitude, sun_pos);
+    setTimelikeSlider(date_phase);
+  } else {
+    /* #moon-pos の値から、#time, #sun-pos を決め直す */
+
+    /* 月は時間が進むと天球上を少し東に移動する。
+       最初の天球上に固定された月を指定した角度に持っていくように時間を決め直すと、
+       それで月の位置が動く。方程式を解けば良いのかも知れないが、
+       もっとサボって、
+       ・月は太陽南中時に、黄道上にあり、太陽よりlunar_phase先に進んでいることにする。
+       ・月の動きの分、天球の回転速度を少しゆっくりにしてmoon_posに来る時間を決める。
+
+       月の位置正確な位置は、この関数を抜けて、
+       newSettings()に戻った後で、新しい時間を使い白道を考慮して決め直す */
+    var lunar_phase =
+        ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) ?
+        ($('#lunar-phase-init').val()/360.0 + $('#date').val()/synodic_period)
+          *2*Math.PI :
+        $('#moon-phase').val() / synodic_period * 2*Math.PI;
+    /* 黄道の回転軸。この軸の正方向に回ると東回り。
+       試行錯誤の末作った式で説明しづらい */
+    var ecliptic_axes = e2.clone()
+        .applyEuler(new THREE.Euler(0, 0, earth_th))
+        .applyEuler(new THREE.Euler(0, -phi, 0));
+    var moon_dir = sun_dir_canonical
+        .clone()
+        .applyAxisAngle(ecliptic_axes, lunar_phase);
+    /* 上で赤道上で南中している太陽(月のつもり)を黄道軸回りに lunar_phaseだけ回した。
+       今度は、自転軸(赤道なのでy軸)回りにどれだけ戻せば南中するかを求める */
+    var moon_dir_tmp = moon_dir.clone().setY(0).normalize(),
+        back_phase = Math.acos(moon_dir_tmp.dot(e3));
+    if ( moon_dir.x >= 0 ) // 月が東側の時に負
+      back_phase = -back_phase;
+    // back_phaseだけ戻して月が南中した時のベクトル。回してもいいが回さないで求まる。
+    moon_dir_tmp.set(0, moon_dir.y, Math.sqrt(1-moon_dir.y**2));
+    date_phase = getDatePhase(moon_dir_tmp, latitude, moon_pos);
+    date_phase -= back_phase;
+    setTimelikeSlider(date_phase);
   }
 
   return date_phase;
@@ -244,6 +312,7 @@ function newSettings() {
 	  year_phase = $('#date').val()/365.0*2*Math.PI,
 	  date_phase = ($('#time').val()-12)/24.0*2*Math.PI, // 12時が 0.0
       sun_pos = $('#sun-pos').val()/ 180.0 * Math.PI,
+      moon_pos = $('#moon-pos').val()/ 180.0 * Math.PI,
 	  lunar_phase_init = $('#lunar-phase-init').val()/180*Math.PI,
       lunar_phase, lunar_phase_diff,
 	  moon_phase = $('#moon-phase').val(),
@@ -258,11 +327,10 @@ function newSettings() {
   var sun_dir_canonical = new THREE.Vector3(
     0, -Math.sin(angles.th), Math.cos(angles.th));
 
-  /* time と sun-posは、どちらか一方からもう一方を定める。
-     sun-posのラジオボタンがcheckedの時には、timeは書き換える。
-     逆に、timeがcheckedの時には、sun-posを書き換える */
+  /* time, sun-pos, moon-pos は、いづれかから他を定める。
+     例えばsun-posのラジオボタンがcheckedの時には、time, moon-posは書き換える。*/
   date_phase = correct_timelike(
-    date_phase, sun_pos, sun_dir_canonical, latitude);
+    date_phase, sun_pos, moon_pos, sun_dir_canonical, latitude, angles.phi);
 
   /* date_phaseが変わるので、year_phase, angles, sun_dir_canonicalを再計算 */
   year_phase = $('#date').val()/365.0*2*Math.PI + date_phase/365.0;
