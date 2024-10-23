@@ -916,7 +916,7 @@ function init2() {
 }
 
 function textRadioClicked(target) {
-  var clicked_span = $('span', target),
+  var clicked_span = $(target).parent().find('span'),
       is_timelike = clicked_span.hasClass('timelike'),
       target_class = is_timelike ? '.timelike' : '.phaselike';
 
