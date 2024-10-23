@@ -201,7 +201,7 @@ function correctTimelike(
        最初の天球上に固定された月を指定した角度に持っていくように時間を決め直すと、
        それで月の位置が動く。方程式を解けば良いのかも知れないが、
        もっとサボって、
-       ・月の動きの分、天球の回転速度を少し速くしてmoon_posに来る時間を決める。
+       ・月の動きの分、天球の回転速度を少し遅くしてmoon_posに来る時間を決める。
 
        月の位置正確な位置は、この関数を抜けて、
        newSettings()に戻った後で、新しい時間を使い決め直す */
@@ -238,9 +238,9 @@ function correctTimelike(
     else if ( time_phase > Math.PI )
       time_phase -= Math.PI*2;
 
-    /* 月の動きの分、天球の回転速度を少し速く。
-       24 * (1-1/synodic_period)時間で月は前日の位置に戻って来る。 */
-    setTimelikeSlider(time_phase, 24 * (1-1/synodic_period));
+    /* 月の動きの分、天球の回転速度を少し遅く。
+       24 * (1+1/synodic_period)時間で月は前日の位置に戻って来る。 */
+    setTimelikeSlider(time_phase, 24 * (1+1/synodic_period));
   }
 
   return time_phase;
