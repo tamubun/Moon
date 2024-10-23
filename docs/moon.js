@@ -230,6 +230,10 @@ function correctTimelike(
     moon_dir_tmp.set(0, moon_dir.y, Math.sqrt(1-moon_dir.y**2));
     time_phase = getTimePhase(moon_dir_tmp, latitude, moon_pos);
     time_phase -= back_phase;
+    if ( time_phase < -Math.PI )
+      time_phase += Math.PI*2;
+    else if ( time_phase > Math.PI )
+      time_phase -= Math.PI*2;
     setTimelikeSlider(time_phase);
   }
 
