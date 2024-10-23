@@ -133,7 +133,6 @@ function getTimePhase(canonical_dir, latitude, pos ) {
   var polaris_dir = e2.clone().applyAxisAngle(e1, latitude);
   var dir = canonical_dir.applyAxisAngle(e1, latitude);
 
-
   /* tan(pos) では決められない。南中でtan(pos)が発散するし他の値でも不定性がある。
      sin(pos)で決めるようにして、cos(pos)で不定性を除く */
   var time_phase = findTheta( // findThetaは-pi..piの値を返す
@@ -143,8 +142,8 @@ function getTimePhase(canonical_dir, latitude, pos ) {
 }
 
 /* .timelikeのスライダーの値を定める */
-function setTimelikeSlider(time_phase) {
-  var time_val = (time_phase + Math.PI)/Math.PI/2 * 24.0;
+function setTimelikeSlider(time_phase, hour_per_day=24.0) {
+  var time_val = time_phase/Math.PI/2 * hour_per_day + 12.0;
   /* sliderのstep数 1刻みに合わせて四捨五入する */
   time_val = Math.round(time_val*10) / 10;
   if ( $('#time').val() != time_val ) {
@@ -202,39 +201,46 @@ function correctTimelike(
        最初の天球上に固定された月を指定した角度に持っていくように時間を決め直すと、
        それで月の位置が動く。方程式を解けば良いのかも知れないが、
        もっとサボって、
-       ・月は太陽南中時に、黄道上にあり、太陽よりlunar_phase先に進んでいることにする。
-       ・月の動きの分、天球の回転速度を少しゆっくりにしてmoon_posに来る時間を決める。
+       ・月の動きの分、天球の回転速度を少し速くしてmoon_posに来る時間を決める。
 
        月の位置正確な位置は、この関数を抜けて、
-       newSettings()に戻った後で、新しい時間を使い白道を考慮して決め直す */
-    var lunar_phase =
-        ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) ?
+       newSettings()に戻った後で、新しい時間を使い決め直す */
+    var year_phase = $('#date').val()/365.0*2*Math.PI,
+        node_phase = $('#node').val()/180*Math.PI,
+        sun_angles, lunar_phase, moon_dir_canonical;
+
+    // #timeによる太陽、月の移動を入れない
+    sun_angles =
+      eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
+    lunar_phase =
+      ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) ?
         ($('#lunar-phase-init').val()/360.0 + $('#date').val()/synodic_period)
-          *2*Math.PI :
-        $('#moon-phase').val() / synodic_period * 2*Math.PI;
-    /* 黄道の回転軸。この軸の正方向に回ると東回り。
-       試行錯誤の末作った式で説明しづらい */
-    var ecliptic_axes = e2.clone()
-        .applyEuler(new THREE.Euler(0, 0, earth_th))
-        .applyEuler(new THREE.Euler(0, -phi, 0));
-    var moon_dir = sun_dir_canonical
-        .clone()
-        .applyAxisAngle(ecliptic_axes, lunar_phase);
-    /* 上で赤道上で南中している太陽(月のつもり)を黄道軸回りに lunar_phaseだけ回した。
-       今度は、自転軸(赤道なのでy軸)回りにどれだけ戻せば南中するかを求める */
-    var moon_dir_tmp = moon_dir.clone().setY(0).normalize(),
+        *2*Math.PI :
+      $('#moon-phase').val() / synodic_period * 2*Math.PI,
+    moon_dir_canonical = calcMoonDirCanonical(
+      lunar_phase + node_phase + year_phase, sun_angles);
+
+    /* 上で赤道上、正午における月の位置を
+       自転軸(赤道なのでy軸)回りにどれだけ戻せば南中するかを求める */
+    var moon_dir_tmp = moon_dir_canonical.clone().setY(0).normalize(),
         back_phase = Math.acos(moon_dir_tmp.dot(e3));
-    if ( moon_dir.x >= 0 ) // 月が東側の時に負
+    if ( moon_dir_canonical.x >= 0 ) // 月が東側の時に負
       back_phase = -back_phase;
     // back_phaseだけ戻して月が南中した時のベクトル。回してもいいが回さないで求まる。
-    moon_dir_tmp.set(0, moon_dir.y, Math.sqrt(1-moon_dir.y**2));
+    moon_dir_tmp.set(
+      0, moon_dir_canonical.y, Math.sqrt(1-moon_dir_canonical.y**2));
+    // 緯度latitudeで南中してる月が moon_posに来るまでの回転角
     time_phase = getTimePhase(moon_dir_tmp, latitude, moon_pos);
+    // 緯度latitudeで正午の時の月が moon_posに来るまでの回転角
     time_phase -= back_phase;
     if ( time_phase < -Math.PI )
       time_phase += Math.PI*2;
     else if ( time_phase > Math.PI )
       time_phase -= Math.PI*2;
-    setTimelikeSlider(time_phase);
+
+    /* 月の動きの分、天球の回転速度を少し速く。
+       24 * (1-1/synodic_period)時間で月は前日の位置に戻って来る。 */
+    setTimelikeSlider(time_phase, 24 * (1-1/synodic_period));
   }
 
   return time_phase;
