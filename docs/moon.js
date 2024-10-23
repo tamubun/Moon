@@ -168,7 +168,7 @@ function setTimelikeSlider(time_phase) {
    sun_dir は、赤道、正午のarena0における太陽の方向ベクトル
    (sun_posからtime_phaseを決め直す時でも、変更前の値から決めた sun_dir
    を使うが、気にしない事にする)。 */
-function correct_timelike(
+function correctTimelike(
   time_phase, sun_pos, moon_pos, sun_dir_canonical, latitude, phi)
 {
   var theta;
@@ -241,7 +241,7 @@ function correct_timelike(
 
    lunar_pnase: 月齢を角度にした値、つまり、りゅう座の頭からみた
    月と太陽の角度差([0..2pi]ではない)を返す */
-function correct_phaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
+function correctPhaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
   var lunar_phase;
 
   if ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) {
@@ -277,7 +277,7 @@ function correct_phaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
 
 /* 赤道、正午のarena0における月の方向を計算して返す。
    ecliptic_longitude_diff は、昇交点と月との黄経差 */
-function calc_moon_dir_canonical(ecliptic_longitude_diff, sun_angles)
+function calcMoonDirCanonical(ecliptic_longitude_diff, sun_angles)
 {
   var psi,		// 昇交点からの月の軌道上での回転角
 	  moon_vec, // 月の方向 (arena1での座標系)
@@ -330,7 +330,7 @@ function newSettings() {
 
   /* time, sun-pos, moon-pos は、いづれかから他を定める。
      例えばsun-posのラジオボタンがcheckedの時には、time, moon-posは書き換える。*/
-  time_phase = correct_timelike(
+  time_phase = correctTimelike(
     time_phase, sun_pos, moon_pos, sun_dir_canonical, latitude, angles.phi);
 
   /* time_phaseが変わるので、year_phase_fine, angles, sun_dir_canonicalを再計算 */
@@ -345,7 +345,7 @@ function newSettings() {
      moon-phaseのラジオボタンがcheckedの時には、lunar-phase-initは書き換える。
      逆に、lunar-phase-initがcheckedの時には、moon-phaseを書き換える */
   lunar_phase =
-    correct_phaselike(lunar_phase_init, moon_phase, lunar_phase_diff);
+    correctPhaselike(lunar_phase_init, moon_phase, lunar_phase_diff);
 
   /* 天球の緯度による傾き */
   celestial.quaternion.setFromAxisAngle(e1, latitude);
@@ -386,7 +386,7 @@ function newSettings() {
   moons_path1.quaternion.setFromAxisAngle(e3, -node_phase).multiply(q);
 
   /* 赤道、正午のarena0における月の方向 */
-  var moon_dir_canonical = calc_moon_dir_canonical(
+  var moon_dir_canonical = calcMoonDirCanonical(
     lunar_phase + node_phase + year_phase_fine, angles);
   /* 指定された緯度、時刻のarena0における月の方向 */
   var moon_dir = moon_dir_canonical.clone().applyQuaternion(
