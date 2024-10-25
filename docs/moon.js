@@ -141,14 +141,18 @@ function getTimePhase(canonical_dir, latitude, pos ) {
   return time_phase;
 }
 
-/* .timelikeのスライダーの値を定める */
-function setTimelikeSlider(time_phase, hour_per_day=24.0) {
-  var time_val = time_phase/Math.PI/2 * hour_per_day + 12.0;
-  /* sliderのstep数 1刻みに合わせて四捨五入する */
-  time_val = Math.round(time_val*10) / 10;
-  if ( $('#time').val() != time_val ) {
+/* スライダー値を変更する */
+function changeSliderVal(slider_id, new_val) {
+  var slider = $(slider_id),
+      old_val = +slider.val(),
+      inv_step = 1/slider.attr('step') || 1;
+
+  /* sliderのstep数に合わせて四捨五入する。
+     逆数を使って計算しないと、浮動小数点の誤差で上手くいかなかった */
+  new_val = Math.round(new_val*inv_step) / inv_step;
+  if ( old_val != new_val ) {
     /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
-    $('#time').val(time_val).slider('refresh');
+    slider.val(new_val).slider('refresh');
   }
 }
 
@@ -183,17 +187,12 @@ function correctTimelike(
     if ( theta < 0 )
       theta += 2*Math.PI;
 
-    /* sliderのstep数 1刻みに合わせて四捨五入する */
-    var sun_pos = Math.round(theta/Math.PI*180);
-    if ( $('#sun-pos').val() != sun_pos ) {
-      /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
-      $('#sun-pos').val(sun_pos).slider('refresh');
-    }
+    changeSliderVal('#sun-pos', theta/Math.PI*180);
   } else if ( $('label[for=sun-pos]>span').hasClass('checked') ) {
     /* #sun-pos の値から、#time, #moon-pos を決め直す */
 
     time_phase = getTimePhase(sun_dir_canonical.clone(), latitude, sun_pos);
-    setTimelikeSlider(time_phase);
+    changeSliderVal('#time', time_phase/Math.PI/2 * 24 + 12.0);
   } else {
     /* #moon-pos の値から、#time, #sun-pos を決め直す */
 
@@ -237,10 +236,12 @@ function correctTimelike(
       time_phase += Math.PI*2;
     else if ( time_phase > Math.PI )
       time_phase -= Math.PI*2;
+    // ここで time_phase = -piになると、一日24hより長いので#time < 0になってまう
 
     /* 月の動きの分、天球の回転速度を少し遅く。
        24 * (1+1/synodic_period)時間で月は前日の位置に戻って来る。 */
-    setTimelikeSlider(time_phase, 24 * (1+1/synodic_period));
+    const hour_per_day = 24 * (1+1/synodic_period);
+    changeSliderVal('#time', time_phase/Math.PI/2 * hour_per_day + 12.0);
   }
 
   return time_phase;
@@ -259,12 +260,7 @@ function correctPhaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
     var w=Math.floor(lunar_phase / (2* Math.PI));
     moon_phase = (lunar_phase - w*2*Math.PI)/2/Math.PI * synodic_period;
 
-    /* sliderのstep数 0.1刻みに合わせて四捨五入する */
-    moon_phase = Math.round(moon_phase*10) / 10;
-    if ( $('#moon-phase').val() != moon_phase ) {
-      /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
-      $('#moon-phase').val(moon_phase).slider('refresh');
-    }
+    changeSliderVal('#moon-phase', moon_phase);
   } else {
     lunar_phase = moon_phase / synodic_period * 2*Math.PI;
     lunar_phase_init = lunar_phase - lunar_phase_diff;
@@ -274,12 +270,7 @@ function correctPhaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
     }
     lunar_phase_init = lunar_phase_init / Math.PI * 180;
 
-    /* sliderのstep数 1刻みに合わせて四捨五入する */
-    lunar_phase_init = Math.round(lunar_phase_init);
-    if ( $('#lunar-phase-init').val() != lunar_phase_init ) {
-      /* 上の条件を抜くと $('input').change() が再現無く呼ばれて落ちる */
-      $('#lunar-phase-init').val(lunar_phase_init).slider('refresh');
-    }
+    changeSliderVal('#lunar-phase-init', lunar_phase_init);
   }
 
   return lunar_phase;
