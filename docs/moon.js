@@ -208,7 +208,7 @@ function correctTimelike(
         node_phase = $('#node').val()/180*Math.PI,
         sun_angles, lunar_phase, moon_dir_canonical;
 
-    // #timeによる太陽、月の移動を入れない
+    // 日付によって太陽の方向を定める。時間による太陽と月の移動は考慮しない。
     sun_angles =
       eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
     lunar_phase =
@@ -219,10 +219,17 @@ function correctTimelike(
     moon_dir_canonical = calcMoonDirCanonical(
       lunar_phase + node_phase + year_phase, sun_angles);
 
-    /* 上で赤道上、正午における月の位置を
+    /* 上で赤道上、正午における月の位置を求めた。これを
        自転軸(赤道なのでy軸)回りにどれだけ戻せば南中するかを求める */
     var moon_dir_tmp = moon_dir_canonical.clone().setY(0).normalize(),
-        back_phase = Math.acos(moon_dir_tmp.dot(e3));
+        back_phase = Math.acos(moon_dir_tmp.dot(e3)),
+        new_time;
+
+    /* 月の動きの分、天球の回転速度を少し遅く。
+       h時間で月は前日の位置に戻って来るとして、synodic_period=pと略すと、
+       1時間で回る角度は、2π/h = 2π * (p-1) / (24 p)
+       これを解いて h = 24 * p / (p-1) */
+    const hour_per_day_modified = 24 * synodic_period / (synodic_period-1);
     if ( moon_dir_canonical.x >= 0 ) // 月が東側の時に負
       back_phase = -back_phase;
     // back_phaseだけ戻して月が南中した時のベクトル。回してもいいが回さないで求まる。
@@ -231,17 +238,22 @@ function correctTimelike(
     // 緯度latitudeで南中してる月が moon_posに来るまでの回転角
     time_phase = getTimePhase(moon_dir_tmp, latitude, moon_pos);
     // 緯度latitudeで正午の時の月が moon_posに来るまでの回転角
+    // ここ間違い。赤道で南中するまでの時間を引いたらだめ。
     time_phase -= back_phase;
-    if ( time_phase < -Math.PI )
-      time_phase += Math.PI*2;
-    else if ( time_phase > Math.PI )
-      time_phase -= Math.PI*2;
-    // ここで time_phase = -piになると、一日24hより長いので#time < 0になってまう
 
-    /* 月の動きの分、天球の回転速度を少し遅く。
-       24 * (1+1/synodic_period)時間で月は前日の位置に戻って来る。 */
-    const hour_per_day = 24 * (1+1/synodic_period);
-    changeSliderVal('#time', time_phase/Math.PI/2 * hour_per_day + 12.0);
+    // 更新後のスライダー #time の値
+    new_time = time_phase/Math.PI/2 * hour_per_day_modified + 12.0;
+
+    // #timeのスライダー値の範囲(0..30)に収める。
+    if ( new_time < +$('#time').attr('min') ) {
+      /* 翌日は24hから月の移動の分ずれている事に注意 */
+      new_time += hour_per_day_modified;
+      time_phase = (new_time - 12.0) / hour_per_day_modified * 2*Math.PI;
+    } else if ( new_time > +$('#time').attr('max') ) {
+      new_time -= hour_per_day_modified;
+      time_phase = (new_time - 12.0) / hour_per_day_modified * 2*Math.PI;
+    }
+    changeSliderVal('#time', new_time);
   }
 
   return time_phase;
