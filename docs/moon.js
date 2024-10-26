@@ -126,19 +126,51 @@ function findTheta(v, a, sine, cosine, tolerance = 5e-5, max_iter = 1000) {
   return theta;
 }
 
-/* arena0座標で 正午に赤道上 canonical_dir 方向(南中してること)にある星を日周運動させて
-   posの角度(星が出る時: pos=0, 南中: pos=pi/2, 沈む時: pos=pi)に来る時間を求める。
-   時間を位相にした値(12時が0)を返す。*/
-function getTimePhase(canonical_dir, latitude, pos ) {
+/* arena0座標で 正午に赤道上 canonical_dir 方向(南中してること)にある星を
+   経度は同じ、緯度が latitude上の場所で日周運動させて
+   posの角度(星が出る時: pos=0, 南中: pos=pi/2, 沈む時: pos=pi)に
+   持っていくのに必要な回転角(西向きが正) -pi..pi を返す。*/
+function getRotPhaseCulumination(canonical_dir, latitude, pos ) {
   var polaris_dir = e2.clone().applyAxisAngle(e1, latitude);
-  var dir = canonical_dir.applyAxisAngle(e1, latitude);
+  var dir = canonical_dir.clone().applyAxisAngle(e1, latitude);
 
   /* tan(pos) では決められない。南中でtan(pos)が発散するし他の値でも不定性がある。
      sin(pos)で決めるようにして、cos(pos)で不定性を除く */
-  var time_phase = findTheta( // findThetaは-pi..piの値を返す
+  var rot_phase = findTheta(
     dir, polaris_dir.negate(), Math.sin(pos), Math.cos(pos))
 
-  return time_phase;
+  return rot_phase;
+}
+
+/* getRotPhaseCulumination()のcanonical_dirが南中して無くても良い一般化版。
+   -pi..piを返す */
+function getRotPhase(canonical_dir, latitude, pos ) {
+  var culumination_dir, dir, base_pos, phase_diff;
+
+  /* 赤道上 canonical_dirの星が南中している時の方向。
+     canonical_dirの南からの角度を求めて自転軸(e2)回りに回してもいいが
+     回さないで求められる */
+  culumination_dir = new THREE.Vector3().set(
+      0, canonical_dir.y, Math.sqrt(1-canonical_dir.y**2));
+
+  /* canonical_dirの星の緯度 latitude での位置(getRotPhaseのposの意味で)
+     を求める */
+  dir = canonical_dir.clone().applyAxisAngle(e1, latitude);
+  base_pos = Math.atan2(dir.z, dir.x);
+
+  /* posに行くまでの位相と base_posに行くまでの位相の差が
+     base_posからposに行くまでの位相。このままでは -2pi..2pi */
+  phase_diff =
+    getRotPhaseCulumination(culumination_dir, latitude, pos) -
+    getRotPhaseCulumination(culumination_dir, latitude, base_pos);
+
+  // 範囲内に入れる
+  if ( phase_diff < -Math.PI )
+    phase_diff += 2*Math.PI;
+  else if (phase_diff > Math.PI )
+    phase_diff -= 2*Math.PI;
+
+  return phase_diff;
 }
 
 /* スライダー値を変更する */
@@ -191,7 +223,8 @@ function correctTimelike(
   } else if ( $('label[for=sun-pos]>span').hasClass('checked') ) {
     /* #sun-pos の値から、#time, #moon-pos を決め直す */
 
-    time_phase = getTimePhase(sun_dir_canonical.clone(), latitude, sun_pos);
+    time_phase = getRotPhaseCulumination(
+      sun_dir_canonical.clone(), latitude, sun_pos);
     changeSliderVal('#time', time_phase/Math.PI/2 * 24 + 12.0);
   } else {
     /* #moon-pos の値から、#time, #sun-pos を決め直す */
@@ -206,7 +239,13 @@ function correctTimelike(
        newSettings()に戻った後で、新しい時間を使い決め直す */
     var year_phase = $('#date').val()/365.0*2*Math.PI,
         node_phase = $('#node').val()/180*Math.PI,
-        sun_angles, lunar_phase, moon_dir_canonical;
+        sun_angles, lunar_phase, moon_dir_canonical, rot_phase, new_time;
+
+    /* 月の動きの分、天球の回転速度を少し遅く。
+       h時間で月は前日の位置に戻って来るとして、synodic_period=pと略すと、
+       1時間で回る角度は、2π/h = 2π * (p-1) / (24 p)
+       これを解いて h = 24 * p / (p-1) */
+    const hour_per_day_modified = 24 * synodic_period / (synodic_period-1);
 
     // 日付によって太陽の方向を定める。時間による太陽と月の移動は考慮しない。
     sun_angles =
@@ -216,44 +255,29 @@ function correctTimelike(
         ($('#lunar-phase-init').val()/360.0 + $('#date').val()/synodic_period)
         *2*Math.PI :
       $('#moon-phase').val() / synodic_period * 2*Math.PI,
+
+    // 赤道上、正午における月の位置
     moon_dir_canonical = calcMoonDirCanonical(
       lunar_phase + node_phase + year_phase, sun_angles);
 
-    /* 上で赤道上、正午における月の位置を求めた。これを
-       自転軸(赤道なのでy軸)回りにどれだけ戻せば南中するかを求める */
-    var moon_dir_tmp = moon_dir_canonical.clone().setY(0).normalize(),
-        back_phase = Math.acos(moon_dir_tmp.dot(e3)),
-        new_time;
-
-    /* 月の動きの分、天球の回転速度を少し遅く。
-       h時間で月は前日の位置に戻って来るとして、synodic_period=pと略すと、
-       1時間で回る角度は、2π/h = 2π * (p-1) / (24 p)
-       これを解いて h = 24 * p / (p-1) */
-    const hour_per_day_modified = 24 * synodic_period / (synodic_period-1);
-    if ( moon_dir_canonical.x >= 0 ) // 月が東側の時に負
-      back_phase = -back_phase;
-    // back_phaseだけ戻して月が南中した時のベクトル。回してもいいが回さないで求まる。
-    moon_dir_tmp.set(
-      0, moon_dir_canonical.y, Math.sqrt(1-moon_dir_canonical.y**2));
-    // 緯度latitudeで南中してる月が moon_posに来るまでの回転角
-    time_phase = getTimePhase(moon_dir_tmp, latitude, moon_pos);
-    // 緯度latitudeで正午の時の月が moon_posに来るまでの回転角
-    // ここ間違い。赤道で南中するまでの時間を引いたらだめ。
-    time_phase -= back_phase;
+    // latitude で正午の月を moon_posに持っていくのに必要な回転角
+    rot_phase = getRotPhase(moon_dir_canonical, latitude, moon_pos);
 
     // 更新後のスライダー #time の値
-    new_time = time_phase/Math.PI/2 * hour_per_day_modified + 12.0;
+    new_time = rot_phase/Math.PI/2 * hour_per_day_modified + 12.0;
 
     // #timeのスライダー値の範囲(0..30)に収める。
-    if ( new_time < +$('#time').attr('min') ) {
+    if ( new_time < +$('#time').attr('min') )
       /* 翌日は24hから月の移動の分ずれている事に注意 */
       new_time += hour_per_day_modified;
-      time_phase = (new_time - 12.0) / hour_per_day_modified * 2*Math.PI;
-    } else if ( new_time > +$('#time').attr('max') ) {
+    else if ( new_time > +$('#time').attr('max') )
       new_time -= hour_per_day_modified;
-      time_phase = (new_time - 12.0) / hour_per_day_modified * 2*Math.PI;
-    }
     changeSliderVal('#time', new_time);
+
+    /* new_timeに相当する回転角を返す。
+       rot_phaseは月を回す角度として求めたが、この関数の返り値 time_phaseは
+       天球の回転角にする必要がある */
+    time_phase = (new_time - 12)/24.0*2*Math.PI;
   }
 
   return time_phase;
