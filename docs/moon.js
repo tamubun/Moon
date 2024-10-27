@@ -189,8 +189,20 @@ function changeSliderVal(slider_id, new_val) {
   }
 }
 
-/* #time の値から、#sun-pos, #moon-pos を決め直す */
-function correctTimelikeUsingTime(year_phase, time_phase) {
+/* lunarPhaseを返す。
+   #lunar-phase-init か #moon-pos のどちらがアクティブかによって決め方が変わる */
+function getLunarPhase() {
+  var lunar_phase =
+  ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) ?
+    ($('#lunar-phase-init').val()/360.0 + $('#date').val()/synodic_period)
+      *2*Math.PI :
+    $('#moon-phase').val() / synodic_period * 2*Math.PI;
+
+  return lunar_phase;
+}
+
+/* #sun-posを決め直す */
+function correctSunPos(year_phase, time_phase) {
   // 時間による太陽の位置変化を考慮する。
   var sun_angles = eclipticToGround(
     e1.clone().applyAxisAngle(e3, year_phase + time_phase/365.0));
@@ -208,6 +220,33 @@ function correctTimelikeUsingTime(year_phase, time_phase) {
   changeSliderVal('#sun-pos', theta/Math.PI*180);
 }
 
+/* #moon-posを決め直す */
+function correctMoonPos(year_phase, time_phase) {
+  var lunar_phase = getLunarPhase(),
+      node_phase = $('#node').val()/180*Math.PI,
+      year_phase_fine = year_phase + time_phase/365.0,
+      sun_angles = eclipticToGround(
+        e1.clone().applyAxisAngle(e3, year_phase_fine));
+
+  // 赤道上、正午における月の位置
+  var moon_dir_canonical = calcMoonDirCanonical(
+    lunar_phase + node_phase + year_phase_fine, sun_angles);
+  // 緯度 latitude、正午のarena0における月の方向
+  var moon_dir = moon_dir_canonical.clone().applyQuaternion(
+    celestial.quaternion);
+  var pos = Math.atan2(moon_dir.z, moon_dir.x)/Math.PI*180;
+  if ( pos < 0 )
+    pos += 360;
+
+  changeSliderVal('#moon-pos', pos);
+}
+
+/* #time の値から、#sun-pos, #moon-pos を決め直す */
+function correctTimelikeUsingTime(year_phase, time_phase) {
+  correctSunPos(year_phase, time_phase);
+  correctMoonPos(year_phase, time_phase);
+}
+
 /* #sun-pos の値から、#time, #moon-pos を決め直す。
    変更後のtime_phaseを返す */
 function correctTimelikeUsingSunPos(year_phase, sun_pos, latitude) {
@@ -218,22 +257,25 @@ function correctTimelikeUsingSunPos(year_phase, sun_pos, latitude) {
     0, -Math.sin(sun_angles.th), Math.cos(sun_angles.th));
   var time_phase = getRotPhaseCulumination(
     sun_dir_canonical.clone(), latitude, sun_pos);
+
   changeSliderVal('#time', time_phase/Math.PI/2 * 24 + 12.0);
+  correctMoonPos(year_phase, time_phase);
 
   return time_phase;
 }
 
 /* #moon-pos の値から、#time, #sun-pos を決め直す。
-   変更後のtime_phaseを返す */
-function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
-  /* 月は時間が進むと天球上を少し東に移動する。
-     最初の天球上に固定された月を指定した角度に持っていくように時間を決め直すと、
-     それで月の位置が動く。方程式を解けば良いのかも知れないが、
-     もっとサボって、
-     ・月の動きの分、天球の回転速度を少し遅くしてmoon_posに来る時間を決める。
+   変更後のtime_phaseを返す。
 
-     月の位置正確な位置は、この関数を抜けて、
+   月は時間が進むと天球上を少し東に移動する。
+   最初の天球上に固定された月を指定した角度に持っていくように時間を決め直すと、
+   それで月の位置が動く。方程式を解けば良いのかも知れないが、
+   もっとサボって、
+   ・月の動きの分、天球の回転速度を少し遅くしてmoon_posに来る時間を決める。
+
+   月の位置正確な位置は、この関数を抜けて、
      newSettings()に戻った後で、新しい時間を使い決め直す */
+function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
   var node_phase = $('#node').val()/180*Math.PI,
       time_phase,
       sun_angles, lunar_phase, moon_dir_canonical, rot_phase, new_time;
@@ -252,11 +294,7 @@ function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
   // 日付によって太陽の方向を定める。時間による太陽と月の移動は考慮しない。
   sun_angles =
     eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
-  lunar_phase =
-    ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) ?
-    ($('#lunar-phase-init').val()/360.0 + $('#date').val()/synodic_period)
-    *2*Math.PI :
-    $('#moon-phase').val() / synodic_period * 2*Math.PI,
+  lunar_phase = getLunarPhase();
 
   // 赤道上、正午における月の位置
   moon_dir_canonical = calcMoonDirCanonical(
@@ -279,12 +317,14 @@ function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
     new_time += hour_per_day_modified;
   else if ( new_time > +$('#time').attr('max') )
     new_time -= hour_per_day_modified;
-  changeSliderVal('#time', new_time);
 
   /* new_timeに相当する回転角を返す。
      rot_phaseは月を回す角度として求めたが、この関数の返り値 time_phaseは
      天球の回転角にする必要がある */
   time_phase = (new_time - 12)/24.0*2*Math.PI;
+
+  changeSliderVal('#time', new_time);
+  correctSunPos(year_phase, time_phase);
 
   return time_phase;
 }
@@ -398,11 +438,6 @@ function newSettings() {
 	  q = new THREE.Quaternion();
 
   $('#date-label').text('日付: ' + calcDate(+$('#date').val()));
-  year_phase_fine = year_phase + time_phase/365.0,
-  sun_angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase_fine));
-  /* 赤道、正午のarena0における太陽の方向 */
-  var sun_dir_canonical = new THREE.Vector3(
-    0, -Math.sin(sun_angles.th), Math.cos(sun_angles.th));
 
   /* time, sun-pos, moon-pos は、いづれかから他を定める。
      例えばsun-posのラジオボタンがcheckedの時には、time, moon-posは書き換える。*/
@@ -413,7 +448,8 @@ function newSettings() {
   year_phase_fine = year_phase + time_phase/365.0;
   sun_angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase_fine));
   // 赤道、正午のarena0における太陽の方向
-  sun_dir_canonical.set(0, -Math.sin(sun_angles.th), Math.cos(sun_angles.th));
+  sun_dir_canonical = new THREE.Vector3(
+    0, -Math.sin(sun_angles.th), Math.cos(sun_angles.th));
 
   lunar_phase_diff =
     (+$('#date').val()+($('#time').val()-12)/24.0)/synodic_period*2*Math.PI;
