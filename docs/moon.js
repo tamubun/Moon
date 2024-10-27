@@ -29,7 +29,8 @@ var sun2, earth2, moon2, sun_light2, ground2;
 
 var sky;
 
-const synodic_period = 29.5306;
+const synodic_period = 29.5306; // 月の満ち欠けの周期
+const sidereal_month = 27.3217; // 月の公転周期
 
 /* 黄道座標系(arena1の座標系: x方向=春分点 y方向=夏至点 z方向 りゅう座の頭)
    から見た成分vで表されるベクトルの方向にある星を赤道上にある地表Pから見た時の
@@ -242,10 +243,15 @@ function correctTimelike(
         sun_angles, lunar_phase, moon_dir_canonical, rot_phase, new_time;
 
     /* 月の動きの分、天球の回転速度を少し遅く。
-       h時間で月は前日の位置に戻って来るとして、synodic_period=pと略すと、
-       1時間で回る角度は、2π/h = 2π * (p-1) / (24 p)
-       これを解いて h = 24 * p / (p-1) */
-    const hour_per_day_modified = 24 * synodic_period / (synodic_period-1);
+       GPT先生に教わった。
+
+       月の天球上の角速度 2pi/sidereal_month*24 (1/hour)
+       自転による天球の角速度 2pi/24 (1/hour)
+       月が同じ場所にくる周期:
+        hour_per_day_modified
+        = 2pi / (2pi/24 - 2pi/(sidereal_month*24))
+        = 1/(1/24 - 1/(sidereal_month*24)) */
+    const hour_per_day_modified = 1/(1/24 - 1/(sidereal_month*24));
 
     // 日付によって太陽の方向を定める。時間による太陽と月の移動は考慮しない。
     sun_angles =
@@ -266,7 +272,12 @@ function correctTimelike(
     // 更新後のスライダー #time の値
     new_time = rot_phase/Math.PI/2 * hour_per_day_modified + 12.0;
 
-    // #timeのスライダー値の範囲(0..30)に収める。
+    /* #timeのスライダー値の範囲(0..30)に収める。
+       この補正が何故か多少大きすぎるらしく、少し位置にズレが生じてしまう。
+
+       GPT先生によると hour_per_day_modified = 1/(1/24 + 1/p)
+       但し、pは月の公転周期 27.32*24 らしい。それに変えるとマシにはなるが、
+       それでもズレるので、このままにしとく */
     if ( new_time < +$('#time').attr('min') )
       /* 翌日は24hから月の移動の分ずれている事に注意 */
       new_time += hour_per_day_modified;
