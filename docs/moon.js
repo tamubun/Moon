@@ -75,6 +75,56 @@ function calcDate(d) {
   return ""+(m+3)+"/"+(d+1) + attr;
 }
 
+/* #sun-pos, #moon-pos のラベル表示を書き換える。
+
+   text-radio の実装で無理な事をしてるので、ラベルの書き換えにしわ寄せがいっている。
+   .text() で書き換えると text-radio の動作がおかしくなる。
+   今の実装でもブラウザーによっては駄目かもしれない */
+function setPhaselikeLabelTexts(e_name) {
+  var name = (e_name == 'sun') ? '日' : '月',
+      fixed_comment = (e_name == 'sun') ? '太陽の位置' : '月の位置',
+      up_comment = ` (${name}の出)`,   // 情緒(笑)
+      down_comment = ` (${name}の入)`, // 同上(笑)
+      label_id = `#${e_name}-pos-label`,
+      pos_id = `#${e_name}-pos`,
+      html = $(label_id).html(),
+      pos = html.indexOf(fixed_comment),
+      comment = '',
+      val = +$(pos_id).val();
+
+  if ( (val + 1) % 360 < 3 )
+    comment = up_comment;
+  else if ( Math.abs(val - 180) < 2 )
+    comment = down_comment;
+  else if ( Math.abs(val - 90) < 2 )
+    comment = ' (南中)';
+  $(label_id).html(
+    html.slice(0, pos) + fixed_comment + comment);
+}
+
+/* スライダー値によってラベル表示の変わるものを書き換える。
+   ・#date: 春分などを追加
+   ・#sun-pos: 日の出、日の入りなどを追加
+   ・#moon-pos: 月の出、月の入りなどを追加
+   ・#latitude: 赤道などを追加 */
+function setLabelTexts() {
+  $('#date-label').text('日付: ' + calcDate(+$('#date').val()));
+
+  setPhaselikeLabelTexts('sun');
+  setPhaselikeLabelTexts('moon');
+
+  var comment = '';
+  switch (+$('#latitude').val()) {
+  case 0: comment = ' (赤道)'; break;
+  case 23: comment = ' (北回帰線)'; break;
+  case -23: comment = ' (南回帰線)'; break;
+  case 90: comment = ' (北極点)'; break;
+  case -90: comment = ' (南極点)'; break;
+  default: comment = '';
+  }
+  $('#latitude-label').text('緯度:' + comment);
+}
+
 /* arena0座標で、aを軸にして、南中しているベクトル(v.x=0)を回転する角度 thetaを
    回転後のベクトル v'として、atan2(v'_z, v'_x) = cosine/sine になるように定める。
 
@@ -437,8 +487,6 @@ function newSettings() {
 	  sun_angles, year_phase_fine, sun_dir_canonical,
 	  q = new THREE.Quaternion();
 
-  $('#date-label').text('日付: ' + calcDate(+$('#date').val()));
-
   /* time, sun-pos, moon-pos は、いづれかから他を定める。
      例えばsun-posのラジオボタンがcheckedの時には、time, moon-posは書き換える。*/
   time_phase = correctTimelike(
@@ -557,6 +605,9 @@ function newSettings() {
   uniforms[ "sunPosition" ].value.copy(sun2.position);
 
   cameras[2].lookAt(moon2.position);
+
+  // 日付に春分を入れるなど、スライダー値によってラベル表示の変わるものを書き換える
+  setLabelTexts();
 
   update();
 }
