@@ -36,7 +36,9 @@ const sidereal_month = 27.3217; // 月の公転周期
    から見た成分vで表されるベクトルの方向にある星を赤道上にある地表Pから見た時の
 	 th: 南中時の天頂角(南が正)
 	 phi: Pが春分点を向いている時に天の北極回りの回転角(天頂方向が0、東が正)
-   で表現する。正午からphiに相当する時間だけ巻き戻せば、その星がPで南中する */
+   で表現する。正午からphiに相当する時間だけ巻き戻せば、その星がPで南中する。
+
+   理解の助け用に親ディレクトリーに eclipticToGround.blend を置いてある */   
 function eclipticToGround(v) {
   var v2 = v.clone().applyAxisAngle(e1, earth_th), // 赤道座標から見た成分
 	  th, phi;
@@ -194,7 +196,10 @@ function getRotPhaseCulumination(canonical_dir, latitude, pos ) {
 }
 
 /* getRotPhaseCulumination()のcanonical_dirが南中して無くても良い一般化版。
-   -pi..piを返す */
+   -pi..piを返す。
+
+   やってることが分かりにくいので、理解の助け用に
+   親ディレクトリーに getRotPhase.blend を置いてある */
 function getRotPhase(canonical_dir, latitude, pos ) {
   var culumination_dir, dir, base_pos, phase_diff;
 
