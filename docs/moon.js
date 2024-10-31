@@ -1,8 +1,11 @@
 'use strict';
-import * as THREE from './js/three/build/three.module.js';
+import * as THREE from 'three'; // three.js r170
 import { TrackballControls } from
   './js/three/examples/jsm/controls/TrackballControls.js';
 import { Sky } from './js/three/examples/jsm/objects/Sky.js';
+import { FontLoader } from './js/three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from
+  './js/three/examples/jsm/geometries/TextGeometry.js';
 
 var debug = false,
 	helper;
@@ -623,7 +626,7 @@ function showLabels0(font) {
 	  scene = scenes[0];
 
   text = new THREE.Mesh(
-	new THREE.TextGeometry(
+	new TextGeometry(
 	  'N', {size:30, height:0.2, curveSegments: 2, font: font}),
 	material);
   text.position.set(0, cel_radius+40, 0.1);
@@ -631,7 +634,7 @@ function showLabels0(font) {
   scene.add(text);
 
   text = new THREE.Mesh(
-	new THREE.TextGeometry(
+	new TextGeometry(
 	  'S', {size:30, height:0.2, curveSegments: 2, font: font}),
 	material);
   text.position.set(0, -cel_radius-15, 0.1);
@@ -639,7 +642,7 @@ function showLabels0(font) {
   scene.add(text);
 
   text = new THREE.Mesh(
-	new THREE.TextGeometry(
+	new TextGeometry(
 	  'E', {size:30, height:0.2, curveSegments: 2, font: font}),
 	material);
   text.position.set(cel_radius+30, 0, 0.1);
@@ -647,7 +650,7 @@ function showLabels0(font) {
   scene.add(text);
 
   text = new THREE.Mesh(
-	new THREE.TextGeometry(
+	new TextGeometry(
 	  'W', {size:30, height:0.2, curveSegments: 2, font: font}),
 	material);
   text.position.set(-cel_radius-30, 0, 0.1);
@@ -660,7 +663,7 @@ function showLabels1(plane, font) {
 	  text;
 
   text = new THREE.Mesh(
-	new THREE.TextGeometry(
+	new TextGeometry(
 	  'N', {size:15, height:0.2, curveSegments: 2, font: font}),
 	material);
   text.position.set(-arena1_scale*0.28, 0, 0.1);
@@ -668,7 +671,7 @@ function showLabels1(plane, font) {
   plane.add(text);
 
   text = new THREE.Mesh(
-	new THREE.TextGeometry(
+	new TextGeometry(
 	  'S', {size:15, height:0.2, curveSegments: 2, font: font}),
 	material);
   text.position.set(arena1_scale*0.35, 0, 0.1);
@@ -676,7 +679,7 @@ function showLabels1(plane, font) {
   plane.add(text);
 
   text = new THREE.Mesh(
-	new THREE.TextGeometry(
+	new TextGeometry(
 	  'E', {size:15, height:0.2, curveSegments: 2, font: font}),
 	material);
   text.position.set(0, arena1_scale*0.3, 0.1);
@@ -684,7 +687,7 @@ function showLabels1(plane, font) {
   plane.add(text);
 
   text = new THREE.Mesh(
-	new THREE.TextGeometry(
+	new TextGeometry(
 	  'W', {size:15, height:0.2, curveSegments: 2, font: font}),
 	material);
   text.position.set(0, -arena1_scale*0.37, 0.1);
@@ -693,7 +696,7 @@ function showLabels1(plane, font) {
 }
 
 function showLabels() {
-  var loader = new THREE.FontLoader();
+  var loader = new FontLoader();
   loader.load(
 	'./js/three/examples/fonts/helvetiker_regular.typeface.json',
 	function(font) {
@@ -753,13 +756,15 @@ function init0() {
   celestial.add(polaris0);
 
   var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
-	  geo = new THREE.Geometry(),
-	  trajectory, i, th;
+	  geo = new THREE.BufferGeometry(),
+	  points = [],
+      trajectory, i, th;
 
   for ( i = 0; i < 41; ++i ) {
 	th = 2*Math.PI / 40 * i;
-	geo.vertices.push(new THREE.Vector3(Math.cos(th), 0, Math.sin(th)));
+	points.push(new THREE.Vector3(Math.cos(th), 0, Math.sin(th)));
   }
+  geo.setFromPoints(points);
   var circle = new THREE.Line(geo, material);
   circle.computeLineDistances();
 
@@ -832,7 +837,7 @@ function init0() {
 		{ color: 0, transparent: true, opacity: 0.8 }),
 	  ground_material = [black, black, black, black, brown, black],
 	  ground0 = new THREE.Mesh(
-		new THREE.CubeGeometry(600, 600,cel_radius * 1.1), ground_material);
+		new THREE.BoxGeometry(600, 600,cel_radius * 1.1), ground_material);
   ground0.position.z = -cel_radius*1.1/2;
   scene.add(ground0);
 
@@ -893,13 +898,15 @@ function init1() {
   scene.add(earth1);
 
   var material = new THREE.LineBasicMaterial({ color: 0xaaaacc }),
-	  geo = new THREE.Geometry(),
-	  trajectory, i, th, circle;
+	  geo = new THREE.BufferGeometry(),
+	  points=[],
+      trajectory, i, th, circle;
 
   for ( i = 0; i < 41; ++i ) {
 	th = 2*Math.PI / 40 * i;
-	geo.vertices.push(new THREE.Vector3(Math.cos(th), Math.sin(th), 0));
+	points.push(new THREE.Vector3(Math.cos(th), Math.sin(th), 0));
   }
+  geo.setFromPoints(points);
   circle = new THREE.Line(geo, material);
 
   // 赤道
@@ -998,6 +1005,8 @@ function init2() {
 		}),
 	  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   scenes.push(scene);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.4;
   renderers.push(renderer);
   cameras.push(camera);
 
@@ -1009,9 +1018,8 @@ function init2() {
   var uniforms = sky.material.uniforms;
   uniforms['turbidity'].value = 11;
   uniforms['rayleigh'].value = 3;
-  uniforms['luminance'].value = 0.8;
-  uniforms['mieCoefficient'].value = 0.005;
-  uniforms['mieDirectionalG'].value = 0.75;
+  uniforms['mieCoefficient'].value = 0.003;
+  uniforms['mieDirectionalG'].value = 0.7;
   scene.add(sky);  
 
   // 日蝕用に本当の視直径0.52度に合わせる
