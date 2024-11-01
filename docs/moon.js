@@ -6,6 +6,7 @@ import { Sky } from './js/three/examples/jsm/objects/Sky.js';
 import { FontLoader } from './js/three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from
   './js/three/examples/jsm/geometries/TextGeometry.js';
+import { GUI } from './js/three/examples/jsm/libs/lil-gui.module.min.js';
 
 var debug = false,
 	helper;
@@ -34,6 +35,39 @@ var sky;
 
 const synodic_period = 29.5306; // 月の満ち欠けの周期
 const sidereal_month = 27.3217; // 月の公転周期
+
+function initGUI() {
+  const effectController = {
+	turbidity: 10,
+	rayleigh: 3,
+	mieCoefficient: 0.003,
+	mieDirectionalG: 0.7,
+	exposure: renderers[2].toneMappingExposure
+  };
+
+  function guiChanged() {
+	const uniforms = sky.material.uniforms;
+	uniforms[ 'turbidity' ].value = effectController.turbidity;
+	uniforms[ 'rayleigh' ].value = effectController.rayleigh;
+	uniforms[ 'mieCoefficient' ].value = effectController.mieCoefficient;
+	uniforms[ 'mieDirectionalG' ].value = effectController.mieDirectionalG;
+	renderers[2].toneMappingExposure = effectController.exposure;
+	renderers[2].render( scenes[2], cameras[2] );
+  }
+
+  const gui = new GUI();
+  gui.add( effectController, 'turbidity', 0.0, 20.0, 0.1 )
+    .onChange( guiChanged );
+  gui.add( effectController, 'rayleigh', 0.0, 4, 0.001 )
+    .onChange( guiChanged );
+  gui.add( effectController, 'mieCoefficient', 0.0, 0.1, 0.001 )
+    .onChange( guiChanged );
+  gui.add( effectController, 'mieDirectionalG', 0.0, 1, 0.001 )
+    .onChange( guiChanged );
+  gui.add( effectController, 'exposure', 0, 1, 0.0001 )
+    .onChange( guiChanged );
+  guiChanged();
+}
 
 /* 黄道座標系(arena1の座標系: x方向=春分点 y方向=夏至点 z方向 りゅう座の頭)
    から見た成分vで表されるベクトルの方向にある星を赤道上にある地表Pから見た時の
@@ -1063,6 +1097,8 @@ function init2() {
 	ground2.rotation.set(-Math.PI/2, 0, 0);
 	ground2.position.y = -0.07;
 	scene.add(ground2);
+  } else {
+    initGUI();
   }
 
   earth2 = new THREE.Mesh(
