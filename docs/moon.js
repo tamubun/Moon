@@ -828,7 +828,7 @@ function init0() {
   scene.add(moon0);
 
   if ( debug ) {
-	moon0.add(new THREE.AxisHelper(cel_radius*0.11));
+	moon0.add(new THREE.AxesHelper(cel_radius*0.11));
   }
 
   var brown = new THREE.MeshLambertMaterial(
@@ -1041,7 +1041,7 @@ function init2() {
   if ( debug ) {
 	helper = new THREE.CameraHelper(camera);
 	scenes[0].add(helper);
-	moon2.add(new THREE.AxisHelper(0.11));
+	moon2.add(new THREE.AxesHelper(0.11));
   }
 
   sun_light2 = new THREE.DirectionalLight(0xffffff,1.0);
