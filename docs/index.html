@@ -33,6 +33,15 @@
   width: 100%;
   position: absolute;
 }
+.text-radio.checked {
+  color: red;
+}
+.text-radio {
+  color: #fdd;
+}
+.ui-field-contain {
+  margin: 0.7em;
+}
 </style>
 </head>
 <body oncontextmenu="return false;">
@@ -59,8 +68,16 @@
     </div>
     <form>
       <div data-role="fieldcontain" style="padding-top: 30px;">
-	<label for='time'>時刻:</label>
+	<label for='time'><span class='text-radio timelike checked'>●</span> 時刻:</label>
 	<input name='time' id='time' class='settings' min='0' max='30' value='12' step='0.1' type='range'>
+      </div>
+      <div data-role="fieldcontain">
+	<label for='sun-pos'><span class='text-radio timelike'>●</span> 太陽の位置:</label>
+	<input name='sun-pos' id='sun-pos' class='settings' min='0' max='360' value='0' type='range'>
+      </div>
+      <div data-role="fieldcontain">
+	<label for='moon-pos'><span class='text-radio timelike'>●</span> 月の位置:</label>
+	<input name='moon-pos' id='moon-pos' class='settings' min='0' max='360' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
 	<label for='date' id='date-label'></label>
@@ -71,8 +88,12 @@
 	<input name='latitude' id='latitude' class='settings' min='-90' max='90' value='35' type='range'>
       </div>
       <div data-role="fieldcontain">
-	<label for='lunar-phase'>月の位置:</label>
-	<input name='lunar-phase' id='lunar-phase' class='settings' min='0' max='360' value='45' type='range'>
+	<label for='lunar-phase-init'><span class='text-radio phaselike checked'>●</span> 3/20の月の位置:</label>
+	<input name='lunar-phase-init' id='lunar-phase-init' class='settings' min='0' max='360' value='45' type='range'>
+      </div>
+      <div data-role="fieldcontain">
+	<label for='moon-phase'><span class='text-radio phaselike'>●</span> 月齢:</label>
+	<input name='moon-phase' id='moon-phase' class='settings' min='0' max='29.5' step='0.1' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
 	<label for='node'>昇交点の位置:</label>
@@ -81,7 +102,7 @@
     </form>
 
     <div data-role="collapsible" data-theme="c" data-content-theme="d">
-      <h4>説明</h4>
+      <h4>説明(クリックすると開きます)</h4>
       <p>月の満ち欠けの少し複雑な仕組みを理解するために作ったプログラムです。おまけで日蝕と月蝕の条件も確かめる事ができます。夕方に西に沈む三日月や半月が、なぜ、日本(少なくとも本州ぐらいの緯度)では、右下か真下が光る物しか見られず左下が光ることが無いか、という私の長年の疑問が自分の中で晴れた記念に作りました。</p>
 
       <p>下側二つの図は、マウスの各ボタンでドラッグする事により、向きや遠近を変えたりする事ができます。タブレットやスマホでは、指一本、二本、三本で操作すると同様のことができます。</p>
@@ -105,7 +126,22 @@
       </div>
       <div data-role="collapsible">
 	<h5>時刻</h5>
-	指定した日付の0時から30時(翌日の朝6時)まで指定します。単純化のために、1日はきっちり24時間、太陽の南中時刻は毎日きっちり12時であるとしています。本来、日中に月が昇っていても、太陽が近くにある時には見えませんが、このプログラムでは見えるようになっています。
+	<p>「時刻」、「太陽の位置」、「月の位置」の三つは、いずれか一つを指定すると、他は自動的に決められます。時刻を指定したい場合には、「時刻」と書いてある場所をクリックして下さい。その場合、「太陽の位置」、「月の位置」の二つのスライダーは灰色になって指定できなくなります。</p>
+	<p>「時刻」では、指定した日付の0時から30時(翌日の朝6時)まで指定します。単純化のために、1日はきっちり24時間、太陽の南中時刻は毎日きっちり12時であるとしています。本来、日中に月が昇っていても、太陽が近くにある時には見えませんが、このプログラムでは見えるようになっています。</p>
+      </div>
+      <div data-role="collapsible">
+	<h5>太陽の位置</h5>
+	<p>「時刻」、「太陽の位置」、「月の位置」の三つは、いずれか一つを指定すると、他は自動的に決められます。太陽の位置を指定したい場合には、「太陽の位置」と書いてある場所をクリックして下さい。その場合、「時刻」、「月の位置」の二つのスライダーは灰色になって指定できなくなります。</p>
+	<p>「太陽の位置」では、日の出(0)や日の入り(180)、南中(90)などの太陽の位置を指定します。すると、日付や緯度を変えても、太陽が常に指定した場所に来るように自動的に時間の方が調整されます。</p>
+	<p>例えば、この指定を使って太陽の位置を日の入りにし、同時に「月齢」を7.5に指定して月を常に半月になるようにしておいて、日付のスライダーを色々動かすと、一年を通して、日の入りの時に半月がどのように傾くかを見たりする事ができます。</p>
+	<p>「緯度」を使って、白夜などの起きる高緯度にしている場合、「太陽の位置」で指定したところに太陽が来る時間が存在しない事があります。本プログラムでは、対策をしてないので、不定の変な時刻になってしまいます。</p>
+      </div>
+      <div data-role="collapsible">
+	<h5>月の位置</h5>
+	<p>「時刻」、「太陽の位置」、「月の位置」の三つは、いずれか一つを指定すると、他は自動的に決められます。月の位置を指定したい場合には、「月の位置」と書いてある場所をクリックして下さい。その場合、「時刻」、「太陽の位置」の二つのスライダーは灰色になって指定できなくなります。</p>
+	<p>「月の位置」では、月の出(0)や月の入り(180)、南中(90)などの月の位置を指定します。すると、日付や緯度を変えても、月が常に指定した場所に来るように自動的に時間の方が調整されます。</p>
+	<p>例えば、この指定を使って月の位置を160ぐらい(月の入りの少し前)にし、同時に「月齢」を3に指定して月を常に三日月になるようにしておいて、日付のスライダーを色々動かすと、一年を通して、夕方に三日月がどのように傾くかを見たりする事ができます。</p>
+	<p>「緯度」を使って、白夜などの起きる高緯度にしている場合、「月の位置」で指定したところに月が来る時間が存在しない事があります。本プログラムでは、対策をしてないので、不定の変な時刻になってしまいます。</p>
       </div>
       <div data-role="collapsible">
 	<h5>日付</h5>
@@ -117,8 +153,16 @@
 	経度の方は、あまり重要ではないので日本の経度辺りに固定しています。
       </div>
       <div data-role="collapsible">
-	<h5>月の位置</h5>
-	春分の日の12時に、太陽の位置に対して、月がどこにいるかを角度で指定します。0度は春分の正午に新月になっていることを意味し、180度なら春分の正午に満月(月は地球の裏側)になっていることを意味します。単純化のために、月は地球の回りを完全な円軌道で等速で回るとしています。
+	<h5>3/20の月の位置</h5>
+	<p>「3/20の月の位置」、「月齢」の二つは、一方を指定すると、他方は自動的に決められます。日付を進めたときに、月の満ち欠けがどうなるか見たい場合には、「3/20の月の位置」と書いてある場所をクリックして下さい。その場合、「月齢」のスライダーは灰色になって指定できなくなります。</p>
+	<p>「3/20の月の位置」では、春分の日(3/20)の12時に、太陽の位置に対して、月がどこにいるかを角度で指定します。0度は春分の正午に新月になっていることを意味し、180度なら春分の正午に満月(月は地球の裏側)になっていることを意味します。</p>
+	<p>単純化のために、月は地球の回りを完全な円軌道で等速で回るとしています。このため、スーパームーンなどは見られません。</p>
+      </div>
+      <div data-role="collapsible">
+	<h5>月齢</h5>
+	<p>「3/20の月の位置」、「月齢」の二つは、一方を指定すると、他方は自動的に決められます。「月齢」を固定したい場合には、「月齢」と書いてある場所をクリックして下さい。その場合、「3/20の月の位置」のスライダーは灰色になって指定できなくなります。</p>
+	<p>「月齢」を指定すると、日付を変えても、月の満ち欠けが変わらないように太陽に対する月の位置関係が自動的に調整されます。これは、本当の月の軌道運動ではありません。</p>
+	<p>「月齢」の指定と同時に、「太陽の位置」か「月の位置」の指定を使うと、年間を通して、三日月や半月が夕方どのように傾くか、などを見ることができます。</p>
       </div>
       <div data-role="collapsible">
 	<h5>昇交点の位置</h5>
