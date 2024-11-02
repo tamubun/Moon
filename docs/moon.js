@@ -703,14 +703,33 @@ function showLabels() {
 }
 
 function initValues() {
+  var timelike = null, phaselike = null;
+
   $(location.hash.substring(1).split('&')).each(function(i,s) {
     var keyval = s.split('='), key = keyval[0], val = +keyval[1];
     if ( key === 'sun-line' || key === 'moon-line' ) {
       $('#' + key).prop('checked', val===1).checkboxradio('refresh');
     } else {
-      $('#' + key).val(val).slider('refresh');
+      /* 排他的なkey(.timelike, .phaselike)に対しては、ループを抜けたあと、
+         複数指定されないようにして、一つにtextradioのチェックを入れる */
+      var text_radio = $(`#${key}-label>span.text-radio`);
+      if ( text_radio.length > 0 ) {
+        // 後から指定されたものを優先
+        if ( text_radio.hasClass('timelike') )
+          timelike = [key, val, text_radio];
+        else
+          phaselike = [key, val, text_radio];
+      } else
+        $('#' + key).val(val).slider('refresh');
     }
   });
+
+  for ( var keyvalradio of [timelike, phaselike] ) {
+    if ( keyvalradio == null )
+      continue;
+    $('#' + keyvalradio[0]).val(keyvalradio[1]).slider('refresh');
+    textRadioClicked(keyvalradio[2]);
+  }
 }
 
 /* arena0 の初期設定 */
