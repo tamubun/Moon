@@ -248,7 +248,7 @@ function changeSliderVal(slider_id, new_val) {
    #lunar-phase-init か #moon-pos のどちらがアクティブかによって決め方が変わる */
 function getLunarPhase() {
   var lunar_phase =
-  ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) ?
+  ( $('label#lunar-phase-init-label>span').hasClass('checked') ) ?
     ($('#lunar-phase-init').val()/360.0 + $('#date').val()/synodic_period)
       *2*Math.PI :
     $('#moon-phase').val() / synodic_period * 2*Math.PI;
@@ -401,10 +401,10 @@ function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
    を使うが、気にしない事にする)。 */
 function correctTimelike(year_phase, time_phase, sun_pos, moon_pos, latitude)
 {
-  if ( $('label[for=time]>span').hasClass('checked') ) {
+  if ( $('label#time-label>span').hasClass('checked') ) {
     // #time の値から、#sun-pos, #moon-pos を決め直す
     correctTimelikeUsingTime(year_phase, time_phase);
-  } else if ( $('label[for=sun-pos]>span').hasClass('checked') ) {
+  } else if ( $('label#sun-pos-label>span').hasClass('checked') ) {
     // #sun-pos の値から、#time, #moon-pos を決め直す
     time_phase =
       correctTimelikeUsingSunPos(year_phase, sun_pos, latitude);
@@ -425,7 +425,7 @@ function correctTimelike(year_phase, time_phase, sun_pos, moon_pos, latitude)
 function correctPhaselike(lunar_phase_init, moon_phase, lunar_phase_diff) {
   var lunar_phase;
 
-  if ( $('label[for=lunar-phase-init]>span').hasClass('checked') ) {
+  if ( $('label#lunar-phase-init-label>span').hasClass('checked') ) {
     lunar_phase = lunar_phase_init + lunar_phase_diff;
     var w=Math.floor(lunar_phase / (2* Math.PI));
     moon_phase = (lunar_phase - w*2*Math.PI)/2/Math.PI * synodic_period;

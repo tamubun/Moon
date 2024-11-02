@@ -68,35 +68,35 @@
     </div>
     <form>
       <div data-role="fieldcontain" style="padding-top: 30px;">
-        <label for='time'><span class='text-radio timelike checked'>●</span> 時刻:</label>
+        <label id='time-label'><span class='text-radio timelike checked'>●</span> 時刻:</label>
         <input name='time' id='time' class='settings' min='0' max='30' value='12' step='0.1' type='range'>
       </div>
       <div data-role="fieldcontain">
-        <label for='sun-pos'><span class='text-radio timelike'>●</span> 太陽の位置:</label>
+        <label id='sun-pos-label'><span class='text-radio timelike'>●</span> 太陽の位置:</label>
         <input name='sun-pos' id='sun-pos' class='settings' min='0' max='360' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
-        <label for='moon-pos'><span class='text-radio timelike'>●</span> 月の位置:</label>
+        <label id='moon-pos-label'><span class='text-radio timelike'>●</span> 月の位置:</label>
         <input name='moon-pos' id='moon-pos' class='settings' min='0' max='360' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
-        <label for='date' id='date-label'></label>
+        <label id='date-label' id='date-label'></label>
         <input name='date' id='date' class='settings' min='0' max='365' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
-        <label for='latitude'>緯度:</label>
+        <label id='latitude-label'>緯度:</label>
         <input name='latitude' id='latitude' class='settings' min='-90' max='90' value='35' type='range'>
       </div>
       <div data-role="fieldcontain">
-        <label for='lunar-phase-init'><span class='text-radio phaselike checked'>●</span> 3/20の月の位置:</label>
+        <label id='lunar-phase-init-label'><span class='text-radio phaselike checked'>●</span> 3/20の月の位置:</label>
         <input name='lunar-phase-init' id='lunar-phase-init' class='settings' min='0' max='360' value='45' type='range'>
       </div>
       <div data-role="fieldcontain">
-        <label for='moon-phase'><span class='text-radio phaselike'>●</span> 月齢:</label>
+        <label id='moon-phase-label'><span class='text-radio phaselike'>●</span> 月齢:</label>
         <input name='moon-phase' id='moon-phase' class='settings' min='0' max='29.5' step='0.1' value='0' type='range'>
       </div>
       <div data-role="fieldcontain">
-        <label for='node'>昇交点の位置:</label>
+        <label id='node-label'>昇交点の位置:</label>
         <input name='node' id='node' class='settings' min='0' max='360' value='0' type='range'>
       </div>
     </form>
