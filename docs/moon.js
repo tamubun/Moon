@@ -183,9 +183,9 @@ function findTheta(v, a, sine, cosine, tolerance = 5e-5, max_iter = 1000) {
    経度は同じ、緯度が latitude上の場所で日周運動させて
    posの角度(星が出る時: pos=0, 南中: pos=pi/2, 沈む時: pos=pi)に
    持っていくのに必要な回転角(西向きが正) -pi..pi を返す。*/
-function getRotPhaseCulumination(canonical_dir, latitude, pos ) {
-  var polaris_dir = e2.clone().applyAxisAngle(e1, latitude);
-  var dir = canonical_dir.clone().applyAxisAngle(e1, latitude);
+function getRotPhaseCulumination(canonical_dir, latitude_q, pos ) {
+  var polaris_dir = e2.clone().applyQuaternion(latitude_q);
+  var dir = canonical_dir.clone().applyQuaternion(latitude_q);
 
   /* tan(pos) では決められない。南中でtan(pos)が発散するし他の値でも不定性がある。
      sin(pos)で決めるようにして、cos(pos)で不定性を除く */
@@ -200,7 +200,7 @@ function getRotPhaseCulumination(canonical_dir, latitude, pos ) {
 
    やってることが分かりにくいので、理解の助け用に
    親ディレクトリーに getRotPhase.blend を置いてある */
-function getRotPhase(canonical_dir, latitude, pos ) {
+function getRotPhase(canonical_dir, latitude_q, pos ) {
   var culumination_dir, dir, base_pos, phase_diff;
 
   /* 赤道上 canonical_dirの星が南中している時の方向。
@@ -211,14 +211,14 @@ function getRotPhase(canonical_dir, latitude, pos ) {
 
   /* canonical_dirの星の緯度 latitude での位置(getRotPhaseのposの意味で)
      を求める */
-  dir = canonical_dir.clone().applyAxisAngle(e1, latitude);
+  dir = canonical_dir.clone().applyQuaternion(latitude_q);
   base_pos = Math.atan2(dir.z, dir.x);
 
   /* posに行くまでの位相と base_posに行くまでの位相の差が
      base_posからposに行くまでの位相。このままでは -2pi..2pi */
   phase_diff =
-    getRotPhaseCulumination(culumination_dir, latitude, pos) -
-    getRotPhaseCulumination(culumination_dir, latitude, base_pos);
+    getRotPhaseCulumination(culumination_dir, latitude_q, pos) -
+    getRotPhaseCulumination(culumination_dir, latitude_q, base_pos);
 
   // 範囲内に入れる
   if ( phase_diff < -Math.PI )
@@ -256,17 +256,30 @@ function getLunarPhase() {
   return lunar_phase;
 }
 
+/* 赤道正午の天球を time_phaseに対応する時刻、latitude_q のQuaternionに対応する
+   緯度に持ってくるQuaternionを返す。
+
+   他とは共有されてないQuaternionを返すので、呼び出し側では好きに書き換えていい */
+function getCelestialQ(time_phase, latitude_q) {
+  var q = new THREE.Quaternion().setFromAxisAngle(e2, -time_phase);
+
+  /* 日周運動。
+     Quaternionの掛け算の順序が見づらいが、緯度の回転の後に日周運動の回転を掛けるので、
+     天球は最初に日周運動で回してから緯度で回した事になる。 */
+  return latitude_q.clone().multiply(q);
+}
+
 /* #sun-posを決め直す */
-function correctSunPos(year_phase, time_phase) {
+function correctSunPos(year_phase, time_phase, latitude_q) {
   // 時間による太陽の位置変化を考慮する。
   var sun_angles = eclipticToGround(
     e1.clone().applyAxisAngle(e3, year_phase + time_phase/365.0));
   // 赤道、正午のarena0における太陽の方向
   var sun_dir_canonical = new THREE.Vector3(
     0, -Math.sin(sun_angles.th), Math.cos(sun_angles.th));
-  // 緯度 latitude、正午のarena0における太陽の方向
+  // 緯度 latitude、time_phase の時刻のarena0における太陽の方向
   var sun_dir = sun_dir_canonical.clone().applyQuaternion(
-    celestial.quaternion);
+    getCelestialQ(time_phase, latitude_q));
   // 北から南を見た軸回りの太陽の角度(0..360)。日の出: 0, 南中: pi/2, 日の入り:pi
   var theta= Math.atan2(sun_dir.z, sun_dir.x);
   if ( theta < 0 )
@@ -276,7 +289,7 @@ function correctSunPos(year_phase, time_phase) {
 }
 
 /* #moon-posを決め直す */
-function correctMoonPos(year_phase, time_phase) {
+function correctMoonPos(year_phase, time_phase, latitude_q) {
   var lunar_phase = getLunarPhase(),
       node_phase = $('#node').val()/180*Math.PI,
       year_phase_fine = year_phase + time_phase/365.0,
@@ -286,9 +299,9 @@ function correctMoonPos(year_phase, time_phase) {
   // 赤道上、正午における月の位置
   var moon_dir_canonical = calcMoonDirCanonical(
     lunar_phase + node_phase + year_phase_fine, sun_angles);
-  // 緯度 latitude、正午のarena0における月の方向
+  // 緯度 latitude、time_phaseの時刻ののarena0における月の方向
   var moon_dir = moon_dir_canonical.clone().applyQuaternion(
-    celestial.quaternion);
+    getCelestialQ(time_phase, latitude_q));
   var pos = Math.atan2(moon_dir.z, moon_dir.x)/Math.PI*180;
   if ( pos < 0 )
     pos += 360;
@@ -297,24 +310,24 @@ function correctMoonPos(year_phase, time_phase) {
 }
 
 /* #time の値から、#sun-pos, #moon-pos を決め直す */
-function correctTimelikeUsingTime(year_phase, time_phase) {
-  correctSunPos(year_phase, time_phase);
-  correctMoonPos(year_phase, time_phase);
+function correctTimelikeUsingTime(year_phase, time_phase, latitude_q) {
+  correctSunPos(year_phase, time_phase, latitude_q);
+  correctMoonPos(year_phase, time_phase, latitude_q);
 }
 
 /* #sun-pos の値から、#time, #moon-pos を決め直す。
    変更後のtime_phaseを返す */
-function correctTimelikeUsingSunPos(year_phase, sun_pos, latitude) {
+function correctTimelikeUsingSunPos(year_phase, sun_pos, latitude_q) {
   // 時間による太陽の位置変化を考慮しない
   var sun_angles = eclipticToGround(e1.clone().applyAxisAngle(e3, year_phase));
   // 赤道、正午のarena0における太陽の方向
   var sun_dir_canonical = new THREE.Vector3(
     0, -Math.sin(sun_angles.th), Math.cos(sun_angles.th));
   var time_phase = getRotPhaseCulumination(
-    sun_dir_canonical.clone(), latitude, sun_pos);
+    sun_dir_canonical.clone(), latitude_q, sun_pos);
 
   changeSliderVal('#time', time_phase/Math.PI/2 * 24 + 12.0);
-  correctMoonPos(year_phase, time_phase);
+  correctMoonPos(year_phase, time_phase, latitude_q);
 
   return time_phase;
 }
@@ -330,7 +343,7 @@ function correctTimelikeUsingSunPos(year_phase, sun_pos, latitude) {
 
    月の位置正確な位置は、この関数を抜けて、
      newSettings()に戻った後で、新しい時間を使い決め直す */
-function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
+function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude_q) {
   var node_phase = $('#node').val()/180*Math.PI,
       time_phase,
       sun_angles, lunar_phase, moon_dir_canonical, rot_phase, new_time;
@@ -356,7 +369,7 @@ function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
     lunar_phase + node_phase + year_phase, sun_angles);
 
   // latitude で正午の月を moon_posに持っていくのに必要な回転角
-  rot_phase = getRotPhase(moon_dir_canonical, latitude, moon_pos);
+  rot_phase = getRotPhase(moon_dir_canonical, latitude_q, moon_pos);
 
   // 更新後のスライダー #time の値
   new_time = rot_phase/Math.PI/2 * hour_per_day_modified + 12.0;
@@ -379,7 +392,7 @@ function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
   time_phase = (new_time - 12)/24.0*2*Math.PI;
 
   changeSliderVal('#time', new_time);
-  correctSunPos(year_phase, time_phase);
+  correctSunPos(year_phase, time_phase, latitude_q);
 
   return time_phase;
 }
@@ -399,19 +412,19 @@ function correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude) {
    sun_dir は、赤道、正午のarena0における太陽の方向ベクトル
    (sun_posからtime_phaseを決め直す時でも、変更前の値から決めた sun_dir
    を使うが、気にしない事にする)。 */
-function correctTimelike(year_phase, time_phase, sun_pos, moon_pos, latitude)
+function correctTimelike(year_phase, time_phase, sun_pos, moon_pos, latitude_q)
 {
   if ( $('label#time-label>span').hasClass('checked') ) {
     // #time の値から、#sun-pos, #moon-pos を決め直す
-    correctTimelikeUsingTime(year_phase, time_phase);
+    correctTimelikeUsingTime(year_phase, time_phase, latitude_q);
   } else if ( $('label#sun-pos-label>span').hasClass('checked') ) {
     // #sun-pos の値から、#time, #moon-pos を決め直す
     time_phase =
-      correctTimelikeUsingSunPos(year_phase, sun_pos, latitude);
+      correctTimelikeUsingSunPos(year_phase, sun_pos, latitude_q);
   } else {
     // #moon-pos の値から、#time, #sun-pos を決め直す
     time_phase =
-      correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude);
+      correctTimelikeUsingMoonPos(year_phase, moon_pos, latitude_q);
   }
 
   return time_phase;
@@ -490,12 +503,13 @@ function newSettings() {
       moon_phase = $('#moon-phase').val(),
       node_phase =  $('#node').val()/180*Math.PI,
       sun_angles, year_phase_fine, sun_dir_canonical,
+      latitude_q = new THREE.Quaternion().setFromAxisAngle(e1, latitude),
       q = new THREE.Quaternion();
 
   /* time, sun-pos, moon-pos は、いづれかから他を定める。
      例えばsun-posのラジオボタンがcheckedの時には、time, moon-posは書き換える。*/
   time_phase = correctTimelike(
-    year_phase, time_phase, sun_pos, moon_pos, latitude);
+    year_phase, time_phase, sun_pos, moon_pos, latitude_q);
 
   // 時間による太陽の位置変化を追加した year_phase
   year_phase_fine = year_phase + time_phase/365.0;
@@ -513,17 +527,10 @@ function newSettings() {
   lunar_phase =
     correctPhaselike(lunar_phase_init, moon_phase, lunar_phase_diff);
 
-  /* 天球の緯度による傾き */
-  celestial.quaternion.setFromAxisAngle(e1, latitude);
-
-  q.setFromAxisAngle(e2, -time_phase);
-  /* 日周運動。この一行が無ければarena0の太陽は常に南中している。
+  /* 天球を緯度、時刻に合わせて回転させる。
      天球にaddされたsun0や黄道、白道等も天球と一緒に日周運動する。
-     moon0は天球にaddされてないので、独立して位置計算する。
-
-     quaternionの掛け算の順序が見づらいが、緯度の回転の後に日周運動の回転を掛けるので、
-     天球は最初に日周運動で回してから緯度で回した事になる。 */
-  celestial.quaternion.multiply(q);
+     moon0は天球にaddされてないので、独立して位置計算する */
+  celestial.quaternion.copy(getCelestialQ(time_phase, latitude_q));
   sun_trajectory.scale.set(
     Math.cos(sun_angles.th)*cel_radius, 1, Math.cos(sun_angles.th)*cel_radius);
   sun_trajectory.position.y = -Math.sin(sun_angles.th) * cel_radius;
